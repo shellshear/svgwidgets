@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()" onmousemove="dragndrop_Move(evt)" onmouseup="dragndrop_End(evt)">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+
+   var showArea = wrapElementById("showarea1");
+
+    var contents = new SVGElement("g");
+    var bg = new SVGElement("rect", {x:0, y:0, width:300, height:400, fill:"green", stroke:"red", "stroke-width":10});
+    var fg = new SVGElement("rect", {x:50, y:50, width:50, height:10, fill:"blue", stroke:"black"});
+    contents.appendChild(bg);
+    contents.appendChild(fg);
+   
+    var infoWindow = new ScrollbarRegion({width:200, height:200, scrollbarWidth:20}, contents);
+    infoWindow.setPosition(100,100);
+    showArea.appendChild(infoWindow);
+}
+
+]]>
+
+</script>
+
+<rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="black"/>
+
+<g id="showarea1"/>
+
+</svg>

@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+    var textArea = document.getElementById("textbox1");
+    
+    var svg_login = new SVGElement("g", {transform:"translate(50, 50)"});
+    var loginLabel = new SVGElement("text", {"font-size":20, fill:"white", y:20}, "username");
+    svg_login.appendChild(loginLabel);
+    var loginTextbox = new TextArea("login", background, {width:200, height:30, fill:"black", "stroke-width":3}, {"font-size":20, fill:"red", x:5, y:20}, 90, 0, {normal:{stroke:"white"}, focus:{stroke:"red"}});
+    svg_login.appendChild(loginTextbox);
+
+    var svg_password = new SVGElement("g", {transform:"translate(50, 100)"});
+    var passwordLabel = new SVGElement("text", {"font-size":20, fill:"white", y:20}, "password");
+    svg_password.appendChild(passwordLabel);
+    var passwordTextbox = new TextArea("password", background, {width:200, height:30, fill:"black", "stroke-width":3}, {"font-size":20, fill:"red", x:5, y:20}, 90, 0, {normal:{stroke:"white"}, focus:{stroke:"red"}});
+    passwordTextbox.setSecret();
+    svg_password.appendChild(passwordTextbox);
+    
+    var actionHandler = new Object();
+    actionHandler.doAction = function(src, evt) 
+    {
+        if (evt.type == "click" || evt.type == "keypress")
+        {
+            alert(loginTextbox.textVal + " " + passwordTextbox.secretVal);
+        }
+    };
+    
+    // Login button
+    var loginButton = new SimpleButton("login", "rect", {width:70, height:30, rx:10, fill:"black", "stroke-width":3}, 30, 150, {normal:{stroke:"white"}, over:{stroke:"red"}, focus:{stroke:"red"}});
+    loginButton.addSVG("text", {"font-size":20, fill:"white", x:15, y:20}, "login");
+    loginButton.addActionListener(actionHandler);
+    loginButton.setBackground(background);
+
+    // Set focus listeners
+    loginTextbox.addFocusListener(passwordTextbox);
+    passwordTextbox.addFocusListener(loginTextbox);
+    passwordTextbox.addFocusListener(loginButton);
+    loginButton.addFocusListener(passwordTextbox);
+    
+    // Set focus ring
+    loginTextbox.setNextFocus(passwordTextbox);
+    passwordTextbox.setPreviousFocus(loginTextbox);
+    passwordTextbox.setNextFocus(loginButton);
+    loginButton.setPreviousFocus(passwordTextbox);
+    
+    textArea.appendChild(svg_login.svg);
+    textArea.appendChild(svg_password.svg);
+    textArea.appendChild(loginButton.svg);
+}
+
+]]>
+
+</script>
+
+<g id="background">
+    <rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="black"/>
+</g>
+
+<g id="log" transform="translate(50, 600)"/>
+
+<g id="textbox1"/>
+
+</svg>
+

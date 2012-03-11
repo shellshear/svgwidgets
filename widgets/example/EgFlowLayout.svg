@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+
+	var workArea = wrapElementById("workArea");
+    
+	// Layout with a minimum spacing
+	var rectLayout1 = new FlowLayout(10, 10, {direction:"right", minSpacing:5, orthogonalAlignment:"centre"});	
+	
+	var rectA = new SVGElement("rect", {width:20, height:20, fill:"red", stroke:"black"});
+    rectLayout1.appendChild(rectA);
+
+	var rectB = new SVGElement("rect", {width:10, height:30, fill:"green", stroke:"black"});
+    rectLayout1.appendChild(rectB);
+
+	var rectC = new SVGElement("rect", {width:30, height:10, fill:"blue", stroke:"black"});
+    rectLayout1.appendChild(rectC);
+	
+	workArea.appendChild(rectLayout1);
+
+	// Layout with a minimum overall width
+	var rectLayout2 = new FlowLayout(10, 50, {direction:"right", minSpacing:5, minWidth:200, flowAlignment:"justify", orthogonalAlignment:"bottom"});	
+	
+	var rectD = new SVGElement("rect", {width:20, height:20, fill:"red", stroke:"black"});
+    rectLayout2.appendChild(rectD);
+
+	var rectE = new SVGElement("rect", {width:10, height:30, fill:"green", stroke:"black"});
+    rectLayout2.appendChild(rectE);
+
+	var rectF = new SVGElement("rect", {width:30, height:10, fill:"blue", stroke:"black"});
+    rectLayout2.appendChild(rectF);
+	
+	workArea.appendChild(rectLayout2);
+
+	var rectLayout3 = new FlowLayout(10, 100, {direction:"right", minSpacing:5, minWidth:200, flowAlignment:"right", orthogonalAlignment:"top"});	
+	
+	var rectG = new SVGElement("rect", {width:20, height:20, fill:"red", stroke:"black"});
+    rectLayout3.appendChild(rectG);
+
+	var rectH = new SVGElement("rect", {width:10, height:30, fill:"green", stroke:"black"});
+    rectLayout3.appendChild(rectH);
+
+	var rectJ = new SVGElement("rect", {width:30, height:10, fill:"blue", stroke:"black"});
+    rectLayout3.appendChild(rectJ);
+	
+	workArea.appendChild(rectLayout3);
+
+}
+
+]]>
+
+</script>
+
+<rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="black"/>
+
+<g id="workArea" transform="scale(3)"/>
+
+</svg>
+

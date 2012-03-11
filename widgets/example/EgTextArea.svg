@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+
+	var textArea = wrapElementById("textbox1");
+    
+    var myTextbox = new TextArea(
+		"myText", // Identifier
+		background, // background object, so that the textArea gets keystrokes
+		{width:200, height:30, fill:"black", "stroke-width":3}, // parameters for bounding rect
+		{"font-size":20, fill:"red", x:5, y:20}, // parameters for text
+		90, // x
+		0,  // y
+		{normal:{stroke:"white"}, focus:{stroke:"red"}} // bounding rect states
+		);
+    textArea.appendChild(myTextbox);
+}
+
+]]>
+
+</script>
+
+<rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="black"/>
+
+<g id="textbox1"/>
+
+</svg>
+
