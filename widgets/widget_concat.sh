@@ -1,0 +1,24 @@
+#!/bin/sh
+cat \
+    util/util.js \
+    util/ActionObject.js \
+    util/SVGElement.js \
+    util/SVGRoot.js \
+    util/SVGComponent.js \
+    button/SimpleButton.js \
+    button/ParamButton.js \
+    button/ParamButton2.js \
+    button/RadioButtonGroup.js \
+    layout/ScaledComponent.js \
+    util/RectLabel.js \
+    button/RectButton.js \
+    util/Background.js \
+    text/TextArea.js \
+    text/MultilineText.js \
+    layout/FlowLayout.js \
+    text/TextLabel.js \
+    util/DragAndDrop.js \
+    window/Scrollbar.js \
+    window/ScrollbarRegion.js \
+    window/SVGWindow.js \
+    > widgets.js
