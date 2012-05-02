@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()" onmousemove="dragndrop_Move(evt)" onmouseup="dragndrop_End(evt)">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+
+	// Create a window
+    var infoWindow = new SVGWindow("info", 3, {fill:"lightgreen", stroke:"black", rx:4}, {width:100});
+    infoWindow.setPosition(150, 150);
+    var label = new TextLabel("foobar", {"font-size":10, fill:"black", "space":"preserve"}, {minSpacing:0, maxWidth:200});
+    infoWindow.contents.appendChild(label);
+	infoWindow.contents.appendChild(new SVGElement("rect", {width:250, height:250, fill:"yellow", stroke:"black"}));
+	infoWindow.refreshLayout();
+
+	// Create another window
+    var boxWindow = new SVGWindow("box", 3, {fill:"yellow", stroke:"black", rx:4}, {width:150});
+    boxWindow.setPosition(0, 50);
+    var label2 = new TextLabel("box", {"font-size":10, fill:"black", "space":"preserve"}, {minSpacing:0, maxWidth:200});
+    boxWindow.contents.appendChild(label2);
+	boxWindow.contents.appendChild(new SVGElement("rect", {width:50, height:50, fill:"blue", stroke:"black"}));
+	boxWindow.refreshLayout();
+
+	// The windows manager holds the windows
+	var windowManager = new SVGWindowManager();
+	windowManager.setPositionConstraints(10, 10, 1000, 1000);
+	windowManager.addWindow(infoWindow);
+	windowManager.addWindow(boxWindow);
+
+	var showArea = wrapElementById("showarea1");
+    showArea.appendChild(windowManager);
+}
+
+]]>
+
+</script>
+
+<rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="black"/>
+
+<g id="showarea1"/>
+
+</svg>
+

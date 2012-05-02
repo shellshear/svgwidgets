@@ -1,14 +1,18 @@
 // ParamButton2.js
 // Defines a parameterisable button
 // params can have the following members:
-// x: x-position
-// y: y-position
-// normalElements: elements - button appearance in non-selected state
-// selectedElements: elements - button appearance in selected state
-// doSeparateCoverLayer: true/false
+// 	x - x-position (default: 0)
+// 	y - y-position (default: 0)
+//  width - width of this button. 
+//  height - height of this button.
+//          If width or height are not defined, the width and height are adjusted to the contents size. 
+//          If either is defined, the contents are scaled to fit instead.
+//  normalElements - button appearance in non-selected state, as a set of buttonElements
+//  selectedElements - button appearance in selected state, as a set of buttonElements
+//  doSeparateCoverLayer - true/false (puts the cover into a separate layer)
 //
 // where:
-// elements:{normal, mouseover, disabled, cover} - they all share the cover
+// buttonElements: {normal, mouseover, disabled, cover} - they all share the cover
 function ParamButton2(src, params)
 {
     this.params = params;
@@ -20,6 +24,26 @@ function ParamButton2(src, params)
         y = params.y;
     ParamButton.baseConstructor.call(this, x, y);
     
+	// Default normal apperance
+	if (this.params.normalElements == null)
+	{
+		var normalButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+		var normalMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+		var normalCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+		this.params.normalElements = {normal:normalButton, mouseover:normalMouseoverButton, cover:normalCoverButton};
+	}
+
+	// Default selected apperance
+	if (this.params.selectedElements == null)
+	{
+		var selectedButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+		var selectedMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+		var selectedCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+ 		this.params.selectedElements = {normal:selectedButton, mouseover:selectedMouseoverButton, cover:selectedCoverButton};
+	}
+
     if (params.width != null || params.height != null)
     {
         // Need to scale all the components
@@ -197,6 +221,33 @@ function getParamButtonIdSet(idGroupName)
 			normal:cloneElementById(document, idGroupName + "Selected"), 
 			mouseover:cloneElementById(document, idGroupName + "SelectedOver"),
 			cover:cloneElementById(document, idGroupName + "Cover")
+			}
+		};
+}
+
+function makeSimpleCheckboxParamButtonIdSet()
+{
+	var normalButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+	var normalMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+	var normalCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+	var selectedButton = new SVGElement("g");
+	selectedButton.appendChild(new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"}));
+	selectedButton.appendChild(new SVGElement("path", {d:"M2,2L8,8M8,2L2,8", stroke:"black", fill:"black"}));
+	var selectedMouseoverButton = new SVGElement("g");
+	selectedMouseoverButton.appendChild(new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"}));
+	selectedMouseoverButton.appendChild(new SVGElement("path", {d:"M2,2L8,8M8,2L2,8", stroke:"red", fill:"none"}));
+	var selectedCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+	
+    return {x:0, y:0, 
+		normalElements: {
+			normal:normalButton, 
+			mouseover:normalMouseoverButton,
+			cover:normalCoverButton},
+		selectedElements: {
+			normal:selectedButton, 
+			mouseover:selectedMouseoverButton,
+			cover:selectedCoverButton
 			}
 		};
 }

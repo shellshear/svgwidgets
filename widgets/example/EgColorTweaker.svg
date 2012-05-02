@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()" onmousemove="dragndrop_Move(evt)" onmouseup="dragndrop_End(evt)">
+
+<script type="text/ecmascript" xlink:href="widgets.js"></script>
+<script type="text/ecmascript" xlink:href="colorTweaker.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function SlideHandler(area, id, currLevels, doChangeRed, doChangeGreen, doChangeBlue, isMaster)
+{
+	this.area = area;
+	this.id = id;
+	this.currLevels = currLevels;
+	this.doChangeRed = doChangeRed;
+	this.doChangeGreen = doChangeGreen;
+	this.doChangeBlue = doChangeBlue;
+	this.isMaster = isMaster;
+}
+
+
+SlideHandler.prototype.doAction = function(src, evt) 
+{
+	if (evt.type == "dragSlider")
+	{
+		// Adjust the current levels.
+		// For the purposes of setLightLevel, we want numbers between 0 (black) and 2 (white).
+		// A level of 1 is unchanged.
+		var levels = this.isMaster ? this.currLevels.master : this.currLevels.slave;
+		if (this.doChangeRed)
+			levels.r = evt.position * 2;
+		if (this.doChangeGreen)
+			levels.g =  evt.position * 2;
+		if (this.doChangeBlue)
+			levels.b = evt.position * 2;
+		
+		// Use the master "volume" to tweak the value of the individual red, green, blue channels as follows:
+		// master < 1 ? master * slave : slave + (2 - slave) * (master - 1))
+		var redLevel = (this.currLevels.master.r < 1) ? this.currLevels.master.r * this.currLevels.slave.r : this.currLevels.slave.r + (2 - this.currLevels.slave.r) * (this.currLevels.master.r - 1);
+		var greenLevel = (this.currLevels.master.g < 1) ? this.currLevels.master.g * this.currLevels.slave.g : this.currLevels.slave.g + (2 - this.currLevels.slave.g) * (this.currLevels.master.g - 1);
+		var blueLevel = (this.currLevels.master.b < 1) ? this.currLevels.master.b * this.currLevels.slave.b : this.currLevels.slave.b + (2 - this.currLevels.slave.b) * (this.currLevels.master.b - 1);
+
+		// The bit that does all the work of parsing through the DOM changing colours.
+		setLightLevel(this.area, {r:redLevel, g:greenLevel, b:blueLevel}, this.id);
+	}
+}
+
+function init()
+{
+	var background = new Background();
+
+	var workArea = wrapElementById("workArea");
+	var workArea2 = wrapElementById("workArea2");
+	var scrollbarArea = wrapElementById("scrollbarArea");
+    
+	var currLevels = {master:{r:1, g:1, b:1}, slave:{r:1, g:1, b:1}};
+	var brightnessSlider = new Slider({orientation:"h", startPosition:"0.5"});
+	brightnessSlider.setPosition(150, 50);
+	brightnessSlider.addActionListener(new SlideHandler(workArea.svg, "area01", currLevels, 1, 1, 1, true));
+	scrollbarArea.appendChild(brightnessSlider);
+
+	var redSlider = new Slider({orientation:"h", startPosition:"0.5", draggerColor:"red"});
+	redSlider.setPosition(150, 80);
+	redSlider.addActionListener(new SlideHandler(workArea.svg, "area01", currLevels, 1, 0, 0, false));
+	scrollbarArea.appendChild(redSlider);
+
+	var greenSlider = new Slider({orientation:"h", startPosition:"0.5", draggerColor:"green"});
+	greenSlider.setPosition(150, 110);
+	greenSlider.addActionListener(new SlideHandler(workArea.svg, "area01", currLevels, 0, 1, 0, false));
+	scrollbarArea.appendChild(greenSlider);
+
+	var blueSlider = new Slider({orientation:"h", startPosition:"0.5", draggerColor:"blue"});
+	blueSlider.setPosition(150, 140);
+	blueSlider.addActionListener(new SlideHandler(workArea.svg, "area01", currLevels, 0, 0, 1, false));
+	scrollbarArea.appendChild(blueSlider);
+
+	var currLevels2 = {master:{r:1, g:1, b:1}, slave:{r:1, g:1, b:1}};
+	var brightnessSlider2 = new Slider({orientation:"h", startPosition:"0.5"});
+	brightnessSlider2.setPosition(650, 50);
+	brightnessSlider2.addActionListener(new SlideHandler(workArea2.svg, "area02", currLevels2, 1, 1, 1, true));
+	scrollbarArea.appendChild(brightnessSlider2);
+
+	var brightnessSlider3 = new Slider({orientation:"h", startPosition:"0.1"});
+	brightnessSlider3.setPosition(1150, 50);
+	var opacityHandler = new Object();
+	opacityHandler.doAction = function(src, evt) 
+		{
+			var opacityArea = document.getElementById("workArea3");
+			opacityArea.setAttribute("opacity", evt.position);
+		};
+	brightnessSlider3.addActionListener(opacityHandler);
+	scrollbarArea.appendChild(brightnessSlider3);
+}
+
+]]>
+
+</script>
+
+<defs>
+  <linearGradient id="linearGradient01">
+    <stop offset="5%" stop-color="#F60" />
+    <stop offset="95%" stop-color="#FF6" />
+  </linearGradient>
+  <linearGradient id="linearGradient02">
+    <stop style="stop-color:#ff3448;stop-opacity:1;" offset="0"/>
+    <stop style="stop-color:green;stop-opacity:1;" offset="1"/>
+  </linearGradient>
+  <radialGradient id="radialGradient01" gradientUnits="userSpaceOnUse"
+                  cx="300" cy="200" r="100">
+    <stop offset="0%" stop-color="red" />
+    <stop offset="50%" stop-color="blue" />
+    <stop offset="100%" stop-color="red" />
+  </radialGradient>
+  <radialGradient
+     xlink:href="#linearGradient02"
+     id="radialGradient02"
+     cx="340" cy="340" fx="20" fy="20"
+     r="40"
+     gradientUnits="userSpaceOnUse"/>
+  <pattern id="TrianglePattern" patternUnits="userSpaceOnUse"
+           x="0" y="0" width="20" height="20"
+           viewBox="0 0 10 10" >
+    <path d="M 0 0 L 7 0 L 3.5 7 z" fill="red" stroke="blue" />
+  </pattern> 
+</defs>
+
+<g id="scrollbarArea"/>
+
+<text x="100" y="20">Set brightness or individual colour channels</text>
+<text x="600" y="20">Gradients and patterns are automatically cloned</text>
+<text x="600" y="40">when you have several elements using them.</text>
+<text x="1100" y="20">Alternate way of setting brightness using opacity</text>
+
+<rect x="40" y="180" width="420" height="420" fill="gray"/>
+
+<g id="workArea" transform="translate(250, 50) rotate(45)">
+<rect x="100" y="100" width="80" height="80" fill="#f00" stroke="orange" stroke-width="15"/>
+<rect x="200" y="100" width="80" height="80" fill="green" stroke="none"/>
+<rect x="300" y="100" width="80" height="80" fill="url(#TrianglePattern)" stroke="blue" stroke-width="15"/>
+<rect x="100" y="200" width="80" height="80" fill="purple" stroke="none"/>
+<rect x="200" y="200" width="80" height="80" fill="url(#linearGradient01)" stroke="red" stroke-width="15"/>
+<rect x="300" y="200" width="80" height="80" fill="url(#radialGradient01)" stroke="orange" stroke-width="15"/>
+<rect x="100" y="300" width="80" height="80" style="stroke: green;fill:url(#linearGradient01);stroke-width: 15; "/>
+<rect x="200" y="300" width="80" height="80" style="fill:red;stroke-opacity: 0.4; stroke: #00F; stroke-width:15"/>
+<rect x="300" y="300" width="80" height="80" fill="url(#radialGradient02)" stroke="white" stroke-width="15"/>
+</g>
+
+<rect x="540" y="180" width="420" height="420" fill="black"/>
+
+<g id="workArea2" transform="translate(750, 50) rotate(45)">
+<rect x="100" y="100" width="80" height="80" fill="#f00" stroke="orange" stroke-width="15"/>
+<rect x="200" y="100" width="80" height="80" fill="green" stroke="none"/>
+<rect x="300" y="100" width="80" height="80" fill="url(#TrianglePattern)" stroke="blue" stroke-width="15"/>
+<rect x="100" y="200" width="80" height="80" fill="purple" stroke="none"/>
+<rect x="200" y="200" width="80" height="80" fill="url(#linearGradient01)" stroke="red" stroke-width="15"/>
+<rect x="300" y="200" width="80" height="80" fill="url(#radialGradient01)" stroke="orange" stroke-width="15"/>
+<rect x="100" y="300" width="80" height="80" style="stroke: green;fill:url(#linearGradient01);stroke-width: 15; "/>
+<rect x="200" y="300" width="80" height="80" style="fill:red;stroke-opacity: 0.4; stroke: #00F; stroke-width:15"/>
+<rect x="300" y="300" width="80" height="80" fill="url(#radialGradient02)" stroke="white" stroke-width="15"/>
+</g>
+
+<rect x="1040" y="180" width="420" height="420" fill="black"/>
+
+
+<g id="workArea3" transform="translate(1250, 50) rotate(45)">
+
+<g id="opacityArea">
+<rect x="100" y="100" width="80" height="80" fill="black" stroke="black" stroke-width="15"/>
+<rect x="200" y="100" width="80" height="80" fill="black" stroke="none"/>
+<rect x="300" y="100" width="80" height="80" fill="black" stroke="black" stroke-width="15"/>
+<rect x="100" y="200" width="80" height="80" fill="black" stroke="none"/>
+<rect x="200" y="200" width="80" height="80" fill="black" stroke="black" stroke-width="15"/>
+<rect x="300" y="200" width="80" height="80" fill="black" stroke="black" stroke-width="15"/>
+<rect x="100" y="300" width="80" height="80" style="stroke: black;fill:black;stroke-width: 15; "/>
+<rect x="200" y="300" width="80" height="80" style="fill:black; stroke: black; stroke-width:15"/>
+<rect x="300" y="300" width="80" height="80" fill="black" stroke="black" stroke-width="15"/>
+</g>
+
+<rect x="100" y="100" width="80" height="80" fill="#f00" stroke="orange" stroke-width="15"/>
+<rect x="200" y="100" width="80" height="80" fill="green" stroke="none"/>
+<rect x="300" y="100" width="80" height="80" fill="url(#TrianglePattern)" stroke="blue" stroke-width="15"/>
+<rect x="100" y="200" width="80" height="80" fill="purple" stroke="none"/>
+<rect x="200" y="200" width="80" height="80" fill="url(#linearGradient01)" stroke="red" stroke-width="15"/>
+<rect x="300" y="200" width="80" height="80" fill="url(#radialGradient01)" stroke="orange" stroke-width="15"/>
+<rect x="100" y="300" width="80" height="80" style="stroke: green;fill:url(#linearGradient01);stroke-width: 15; "/>
+<rect x="200" y="300" width="80" height="80" style="fill:red;stroke-opacity: 0.4; stroke: #00F; stroke-width:15"/>
+<rect x="300" y="300" width="80" height="80" fill="url(#radialGradient02)" stroke="white" stroke-width="15"/>
+
+
+</g>
+
+</svg>
+

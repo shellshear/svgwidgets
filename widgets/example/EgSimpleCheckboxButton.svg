@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+    var background = new Background();
+
+	var workArea = wrapElementById("workArea");
+	
+	var params = makeSimpleCheckboxParamButtonIdSet();
+	params.width = 20;
+	params.height = 20;
+	var checkboxButton = new ParamButton2("checkboxTest", params);
+	checkboxButton.setToggle(true);
+
+	workArea.appendChild(checkboxButton);
+}
+
+]]>
+
+</script>
+
+<rect x="0%" y="0%" width="100%" height="100%" stroke="none" fill="white"/>
+
+<g id="workArea" transform="scale(3)"/>
+
+</svg>
+

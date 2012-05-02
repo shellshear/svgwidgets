@@ -10,9 +10,23 @@ viewbox="0 0 1000 1000" onload="init()">
 
 <![CDATA[
 
+function Alerter()
+{
+}
+
+Alerter.prototype.doAction = function(src, evt)
+{
+	if (evt.type == "click")
+	{
+		alert("clicked");
+		evt.stopPropagation();
+	}
+}
+
 function init()
 {
     var background = new Background();
+	var alerter = new Alerter();
 
 	var workArea = wrapElementById("workArea");
     
@@ -27,6 +41,13 @@ function init()
 	var paramButton = new ParamButton2("buttonPressed", {x:100, y:100, width:10, height:10, normalElements:{normal:expandEl, mouseover:expandOverEl, cover:coverEl1}, selectedElements:{normal:contractEl, cover:coverEl2}});
 	paramButton.setToggle(true);
 	workArea.appendChild(paramButton);
+
+	var resizeEl = new SVGElement("path", {d:"M10,0 L10,10 0,10z M9,3.5 L3.5,9 M9,6 L6,9", fill:"gray", stroke:"black"});
+	var resizeElCover = new SVGElement("path", {d:"M10,0 L10,10 0,10z", fill:"white", opacity:"0"});
+	var resizeButton = new ParamButton2("select1", {x:50, y:100, width:10, height:10, normalElements: {normal:resizeEl, cover:resizeElCover} });
+	resizeButton.addActionListener(alerter);
+	
+	workArea.appendChild(resizeButton);
 }
 
 ]]>

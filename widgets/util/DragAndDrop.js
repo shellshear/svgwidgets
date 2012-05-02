@@ -32,7 +32,10 @@ DragNDropHandler.prototype.dragmove = function(evt)
 
 DragNDropHandler.prototype.dragend = function(evt)
 {
-    this.dragObject = null;
+	if (this.dragObject != null)
+		this.dragObject.setDragEnd(); // Let the drag object know we're done.
+    
+	this.dragObject = null;
 }
 
 function dragndrop_Start(src, evt, initialX, initialY)

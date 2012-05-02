@@ -32,6 +32,7 @@ function init()
         if (evt.type == "click" || evt.type == "keypress")
         {
             alert(loginTextbox.textVal + " " + passwordTextbox.secretVal);
+			evt.stopPropagation();
         }
     };
     

@@ -17,9 +17,29 @@ function init()
     var infoWindow = new SVGWindow("info", 3, {fill:"lightgreen", stroke:"black", rx:4}, {width:100});
     showArea.appendChild(infoWindow);
     infoWindow.setPosition(150, 150);
-    var label = new TextLabel("foobar", {"font-size":10, fill:"black", "space":"preserve"}, {minSpacing:0, maxWidth:200});
+    var label = new TextLabel("foobar", {"font-size":30, fill:"black", "space":"preserve"}, {minSpacing:0, maxWidth:200});
     infoWindow.contents.appendChild(label);
-	infoWindow.contents.appendChild(new SVGElement("rect", {width:250, height:250, fill:"yellow", stroke:"black"}));
+
+	var addBoxButton = new RectButton("addBox", 0, 0, new SVGElement("text", {y:12, "font-size":12}, "add"), {fill:"white", stroke:"red", rx:2}, {fill:"orange"}, {fill:"red"}, 4, false);
+	infoWindow.contents.appendChild(addBoxButton);
+
+	var boxArea = new FlowLayout(0, 0, {direction:"down", minSpacing:3});
+	var internalScrollbarRegion = new ScrollbarRegion({width:400, height:200, scrollbarWidth:20}, boxArea);
+	infoWindow.contents.appendChild(internalScrollbarRegion);
+
+	var myListener = new Object();
+	myListener.doAction = function(src, evt) 
+		{
+			if (evt.type == "click")
+			{
+				boxArea.appendChild(new SVGElement("rect", {width:250, height:250, fill:"yellow", stroke:"black"}));
+				internalScrollbarRegion.refreshLayout();
+				infoWindow.refreshLayout();
+				evt.stopPropagation();
+			}
+		};
+	addBoxButton.addActionListener(myListener);
+
 	infoWindow.refreshLayout();
 }
 

@@ -29,6 +29,8 @@ KevLinDev.extend(TextLabel, FlowLayout);
 // Layout the text
 TextLabel.prototype.setValue = function(textVal)
 {
+	this.textValue = textVal;
+	
     this.removeChildren();
     
     if (textVal == null)

@@ -18,7 +18,9 @@ cat \
     layout/FlowLayout.js \
     text/TextLabel.js \
     util/DragAndDrop.js \
+    util/Slider.js \
     window/Scrollbar.js \
     window/ScrollbarRegion.js \
     window/SVGWindow.js \
+	window/SVGWindowManager.js \
     > widgets.js

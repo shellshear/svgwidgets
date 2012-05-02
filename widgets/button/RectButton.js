@@ -7,7 +7,7 @@ function RectButton(src, x, y, contents, rectAttributes, mouseoverAttributes, se
 	this.mouseoverAttributes = mouseoverAttributes;
 	this.selectAttributes = selectAttributes;
 	
-    this.bgElement = new RectLabel(x, y, contents, rectAttributes, borderWidth);
+    this.bgElement = new RectLabel(0, 0, contents, rectAttributes, borderWidth);
  
     this.mouseoverElement = new SVGElement("rect");
     this.selectElement = new SVGElement("rect");

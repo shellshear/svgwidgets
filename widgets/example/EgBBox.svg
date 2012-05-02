@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()" onmousemove="dragndrop_Move(evt)" onmouseup="dragndrop_End(evt)">
+
+<script type="text/ecmascript" xlink:href="../widgets.js"></script>
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{	
+	var currEl = document.getElementById("foo");
+	var bbox = currEl.getBBox();
+	var clientRect = currEl.getBoundingClientRect();
+	alert(bbox.width + "," + bbox.height + " " + clientRect.width + "," + clientRect.height);
+}
+
+]]>
+
+</script>
+
+<svg x="0" y="0" width="100" height="100" id="foo">
+	<rect x="0" y="0" width="500" height="500" fill="green"/>
+</svg>
+
+</svg>
+

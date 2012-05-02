@@ -1,5 +1,6 @@
 var svgns = "http://www.w3.org/2000/svg";
 var xmlns = "http://www.w3.org/XML/1998/namespace";
+var xlinkns = "http://www.w3.org/1999/xlink";
 
 // Inheritance handler
 KevLinDev = {};
@@ -1133,14 +1134,18 @@ ParamButton.prototype.setContents = function(contents)
 // ParamButton2.js
 // Defines a parameterisable button
 // params can have the following members:
-// x: x-position
-// y: y-position
-// normalElements: elements - button appearance in non-selected state
-// selectedElements: elements - button appearance in selected state
-// doSeparateCoverLayer: true/false
+// 	x - x-position (default: 0)
+// 	y - y-position (default: 0)
+//  width - width of this button. 
+//  height - height of this button.
+//          If width or height are not defined, the width and height are adjusted to the contents size. 
+//          If either is defined, the contents are scaled to fit instead.
+//  normalElements - button appearance in non-selected state, as a set of buttonElements
+//  selectedElements - button appearance in selected state, as a set of buttonElements
+//  doSeparateCoverLayer - true/false (puts the cover into a separate layer)
 //
 // where:
-// elements:{normal, mouseover, disabled, cover} - they all share the cover
+// buttonElements: {normal, mouseover, disabled, cover} - they all share the cover
 function ParamButton2(src, params)
 {
     this.params = params;
@@ -1152,6 +1157,26 @@ function ParamButton2(src, params)
         y = params.y;
     ParamButton.baseConstructor.call(this, x, y);
     
+	// Default normal apperance
+	if (this.params.normalElements == null)
+	{
+		var normalButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+		var normalMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+		var normalCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+		this.params.normalElements = {normal:normalButton, mouseover:normalMouseoverButton, cover:normalCoverButton};
+	}
+
+	// Default selected apperance
+	if (this.params.selectedElements == null)
+	{
+		var selectedButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+		var selectedMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+		var selectedCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+ 		this.params.selectedElements = {normal:selectedButton, mouseover:selectedMouseoverButton, cover:selectedCoverButton};
+	}
+
     if (params.width != null || params.height != null)
     {
         // Need to scale all the components
@@ -1329,6 +1354,33 @@ function getParamButtonIdSet(idGroupName)
 			normal:cloneElementById(document, idGroupName + "Selected"), 
 			mouseover:cloneElementById(document, idGroupName + "SelectedOver"),
 			cover:cloneElementById(document, idGroupName + "Cover")
+			}
+		};
+}
+
+function makeSimpleCheckboxParamButtonIdSet()
+{
+	var normalButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
+	var normalMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
+	var normalCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+
+	var selectedButton = new SVGElement("g");
+	selectedButton.appendChild(new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"}));
+	selectedButton.appendChild(new SVGElement("path", {d:"M2,2L8,8M8,2L2,8", stroke:"black", fill:"black"}));
+	var selectedMouseoverButton = new SVGElement("g");
+	selectedMouseoverButton.appendChild(new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"}));
+	selectedMouseoverButton.appendChild(new SVGElement("path", {d:"M2,2L8,8M8,2L2,8", stroke:"red", fill:"none"}));
+	var selectedCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
+	
+    return {x:0, y:0, 
+		normalElements: {
+			normal:normalButton, 
+			mouseover:normalMouseoverButton,
+			cover:normalCoverButton},
+		selectedElements: {
+			normal:selectedButton, 
+			mouseover:selectedMouseoverButton,
+			cover:selectedCoverButton
 			}
 		};
 }
@@ -1597,7 +1649,7 @@ function RectButton(src, x, y, contents, rectAttributes, mouseoverAttributes, se
 	this.mouseoverAttributes = mouseoverAttributes;
 	this.selectAttributes = selectAttributes;
 	
-    this.bgElement = new RectLabel(x, y, contents, rectAttributes, borderWidth);
+    this.bgElement = new RectLabel(0, 0, contents, rectAttributes, borderWidth);
  
     this.mouseoverElement = new SVGElement("rect");
     this.selectElement = new SVGElement("rect");
@@ -2214,6 +2266,8 @@ KevLinDev.extend(TextLabel, FlowLayout);
 // Layout the text
 TextLabel.prototype.setValue = function(textVal)
 {
+	this.textValue = textVal;
+	
     this.removeChildren();
     
     if (textVal == null)
@@ -2308,7 +2362,10 @@ DragNDropHandler.prototype.dragmove = function(evt)
 
 DragNDropHandler.prototype.dragend = function(evt)
 {
-    this.dragObject = null;
+	if (this.dragObject != null)
+		this.dragObject.setDragEnd(); // Let the drag object know we're done.
+    
+	this.dragObject = null;
 }
 
 function dragndrop_Start(src, evt, initialX, initialY)
@@ -2328,6 +2385,146 @@ function dragndrop_End(evt)
     if (g_dragndrop)
        g_dragndrop.dragend(evt);  
 }
+
+// Slider
+// params:
+// 		orientation - "h" or "v" (default: "h")
+// 		sliderWidth - width of the Slider (default: 10)
+//      sliderLength - length of the Slider (default: 200)
+//      startPosition - starting position of the slider, as a proportion between 0 and 1 (default: 0)
+//      draggerWidth - width of the dragger (default: 10)
+//      draggerHeight - height of the dragger (default: 20)
+//      sliderColor - color of the slider (default: "gray")
+//      draggerColor - color of the dragger (default: "white")
+function Slider(params)
+{   
+    this.params = params;
+    if (!this.params)
+       this.params = [];
+    
+	if (!this.params.orientation)
+		this.params.orientation = "h";
+
+	if (!this.params.sliderWidth || isNaN(this.params.sliderWidth))
+		this.params.sliderWidth = 10;
+
+	if (!this.params.sliderLength || isNaN(this.params.sliderLength))
+		this.params.sliderLength = 200;
+
+	if (!this.params.draggerWidth || isNaN(this.params.draggerWidth))
+		this.params.draggerWidth = 10;
+
+	if (!this.params.draggerHeight || isNaN(this.params.draggerHeight))
+		this.params.draggerHeight = 20;
+
+	if (!this.params.sliderColor)
+		this.params.sliderColor = "gray";
+
+	if (!this.params.draggerColor)
+		this.params.draggerColor = "white";
+
+	if (!this.params.startPosition || isNaN(this.params.startPosition))
+		this.params.startPosition = 0;
+	else if (this.params.startPosition > 1.0)
+		this.params.startPosition = 1.0;
+	else if (this.params.startPosition < 0.0)
+		this.params.startPosition = 0.0;
+
+    var direction;
+    var backIcon;
+    var fwdIcon;
+    var sliderWidth = 0;
+    var sliderHeight = 0;
+    var draggerWidth = 0;
+    var draggerHeight = 0;
+	var bgX = 0;
+	var bgY = 0;
+    if (params.orientation == "h")
+    {
+       	direction = "right";
+       	sliderHeight = this.params.sliderWidth;
+		sliderWidth = this.params.sliderLength;
+       	draggerHeight = this.params.draggerHeight;
+		draggerWidth = this.params.draggerWidth;
+		bgY = (this.params.sliderWidth < this.params.draggerHeight) ? (this.params.draggerHeight - this.params.sliderWidth) / 2 : 0;
+    }
+    else
+    {
+       	direction = "down";
+       	sliderWidth = this.params.sliderWidth;
+		sliderHeight = this.params.sliderLength;
+       	draggerWidth = this.params.draggerHeight;
+		draggerHeight = this.params.draggerWidth;
+		bgX = (this.params.sliderWidth < this.params.draggerHeight) ? (this.params.draggerHeight - this.params.sliderWidth) / 2 : 0;
+    }
+    Slider.baseConstructor.call(this, 0, 0);
+   
+    this.slider = new SVGComponent(0, 0);
+    this.scrollBg = new RectButton("scrollBG", bgX, bgY, null, {fill:this.params.sliderColor, stroke:"black", width:sliderWidth, height:sliderHeight}, {opacity:0}, {opacity:0}, 4, false);
+    this.scrollBg.addActionListener(this);
+
+    this.scrollTop = new RectButton("scrollDragger", 0, 0, null, {fill:this.params.draggerColor, stroke:"black", width:draggerWidth, height:draggerHeight}, {fill:"blue"}, {fill:"blue"}, 4, false);
+    this.scrollTop.addActionListener(this);
+   
+    this.slider.appendChild(this.scrollBg);
+    this.slider.appendChild(this.scrollTop);
+    this.appendChild(this.slider);
+   
+	this.setSliderPosition(this.params.startPosition * this.params.sliderLength);
+}
+
+KevLinDev.extend(Slider, SVGComponent);
+
+Slider.prototype.setDragPosition = function(x, y)
+{
+    this.setSliderPosition(this.params.orientation == "h" ? x : y);
+}
+
+Slider.prototype.setDragEnd = function()
+{
+}
+
+// Set the Slider position
+Slider.prototype.setSliderPosition = function(position)
+{
+    this.position = position < 0 ? 0 : (position > (this.params.sliderLength - this.params.draggerWidth) ? (this.params.sliderLength - this.params.draggerWidth) : position);
+    
+    if (this.params.orientation == "h")
+    {
+        this.scrollTop.setPosition(this.position, 0);
+    }
+    else
+    {
+        this.scrollTop.setPosition(0, this.position);
+    }
+
+    this.tellActionListeners(this, {type:"dragSlider", position:this.position / (this.params.sliderLength - this.params.draggerWidth)});
+    
+}
+
+Slider.prototype.doAction = function(src, evt)
+{
+    if (src.src == "scrollDragger" && evt.type == "mousedown")
+    {
+       	dragndrop_Start(this, evt, this.scrollTop.x, this.scrollTop.y);
+    }
+	else if (src.src == "scrollBG" && evt.type == "click")
+	{
+		// Move the slider to the specified position
+		var currPos = 0;
+	    if (this.params.orientation == "h")
+	    {
+			currPos = (evt.clientX - this.svg.getCTM().e) - 0.5 * this.params.draggerWidth;
+		}
+		else
+		{
+			currPos = (evt.clientY - this.svg.getCTM().f) - 0.5 * this.params.draggerWidth;
+		}
+	    
+		this.setSliderPosition(currPos);
+	}
+}
+
 
 // Scrollbar
 // params:
@@ -2411,6 +2608,10 @@ Scrollbar.prototype.setDragPosition = function(x, y)
     this.setScrollbarPosition(this.params.orientation == "h" ? x : y);
 }
 
+Scrollbar.prototype.setDragEnd = function()
+{
+}
+
 // Set the scrollbar position, as a number between 0 and 1
 Scrollbar.prototype.setScrollbarPosition = function(position)
 {
@@ -2452,18 +2653,26 @@ Scrollbar.prototype.doAction = function(src, evt)
 // A region with automatic scrollbars. If the contents are wider than the container,
 // put scrollbars on the container.
 // params contents:
-// - width - width of the container
-// - height - height of the container
-// - scrollbarWidth - width of the scrollbar
-// - scrollbarGap - gap between contents and scrollbar/s
+// - width - width of the container (default: 100)
+// - height - height of the container (default: 100)
+// - scrollbarWidth - width of the scrollbar (default: 10)
+// - scrollbarGap - gap between contents and scrollbar/s (default: 3)
 function ScrollbarRegion(params, contents)
 {    
     ScrollbarRegion.baseConstructor.call(this, 0, 0);
     this.params = params;
+
     if (this.params.scrollbarWidth == null)
         this.params.scrollbarWidth = 10;
+
     if (this.params.scrollbarGap == null)
         this.params.scrollbarGap = 3;
+
+    if (this.params.width == null)
+        this.params.width = 100;
+
+	if (this.params.height == null)
+	    this.params.height = 100;
 
     this.mask = new SVGRoot(0, 0, params.width, params.height);
     this.contents = new SVGComponent(0, 0);
@@ -2505,12 +2714,12 @@ ScrollbarRegion.prototype.refreshLayout = function()
     this.effectiveHeight = showH ? this.params.height - scrollSpace : this.params.height;
 
     var scrollbarWidth = this.effectiveWidth - 2 * this.params.scrollbarWidth;
-    var hProportion = scrollbarWidth / this.xExtent;
+    var hProportion = this.effectiveWidth / this.xExtent;
     this.hBar.update(scrollbarWidth, hProportion);
     this.hBar.setPosition(0, this.effectiveHeight + this.params.scrollbarGap);
 
     var scrollbarHeight = this.effectiveHeight - 2 * this.params.scrollbarWidth;
-    var vProportion = scrollbarHeight / this.yExtent;
+    var vProportion = this.effectiveHeight / this.yExtent;
     this.vBar.update(scrollbarHeight, vProportion);
     this.vBar.setPosition(this.effectiveWidth + this.params.scrollbarGap, 0);
 
@@ -2560,11 +2769,24 @@ ScrollbarRegion.prototype.notifyResize = function(src)
 	this.refreshLayout();
 }
 
+// We need to override the getBBox, because as far as other elements are concerned, we're
+// always the same size.
+ScrollbarRegion.prototype.getBBox = function()
+{
+	return {x:this.x, y:this.y, width:this.params.width, height:this.params.height};
+}
+
 
 // A window is a rectLabel containing a vertical FlowLayout with the first element being a title bar
 // windowParams can have the following params:
-// width            - width of the window
-// height           - height of the window
+// width            - width of the window (default: 200)
+// height           - height of the window (default: 200)
+// titleBarHeight   - the height of the title bar (default: 16)
+// titleBarGap      - the gap between the title bar and the body (default: 2)
+// scrollbarWidth   - the width of each scrollbar (default: 20)
+// contentsSpacing  - spacing between elements added to the window's vertical flow layout (default: 0)
+// allowUserResize  - allow the user to resize the window (default: false)
+// 
 // storePrefix      - a prefix that gets used by localStore (if that exists) to store
 //                    the window position
 //
@@ -2585,14 +2807,23 @@ function SVGWindow(windowName, borderWidth, rectAttributes, windowParams)
     if (this.windowParams.height == null)
         this.windowParams.height = 200;
     
-    if (this.windowParams.titleBarHeight == null)
+	if (this.windowParams.titleBarHeight == null)
         this.windowParams.titleBarHeight = 16;
+
+    if (this.windowParams.statusBarHeight == null)
+        this.windowParams.statusBarHeight = 10;
 
     if (this.windowParams.titleBarGap == null)
         this.windowParams.titleBarGap = 2;
 
+    if (this.windowParams.scrollbarWidth == null)
+        this.windowParams.scrollbarWidth = 20;
+
     if (this.windowParams.contentsSpacing == null)
         this.windowParams.contentsSpacing = 0;
+
+	if (this.windowParams.allowUserResize == null)
+	    this.windowParams.allowUserResize = false;
 
     // If we use local storage, determine the position of the window.
     var x = 0;
@@ -2609,10 +2840,43 @@ function SVGWindow(windowName, borderWidth, rectAttributes, windowParams)
     }
     SVGWindow.baseConstructor.call(this, x, y);
 
+	this.resizeHandler = new Object();
+	this.resizeHandler.owner = this;
+	this.resizeHandler.startX= this.x;
+	this.resizeHandler.startY = this.y;
+	this.resizeHandler.startWidth = 0;
+	this.resizeHandler.startHeight = 0;
+	this.resizeHandler.setDragPosition = function(x, y)
+		{
+			this.owner.isDragging = true;
+			
+			// Set the new window height and width
+			this.owner.windowParams.width = this.startWidth + (x - this.startX);
+			this.owner.windowParams.height = this.startHeight + (y - this.startY);
+
+			var minHt = this.owner.windowParams.scrollbarWidth * 3 + this.owner.windowParams.titleBarHeight + this.owner.windowParams.statusBarHeight;
+			if (this.owner.windowParams.height < minHt)
+				this.owner.windowParams.height = minHt;
+
+			var minWidth = this.owner.windowParams.scrollbarWidth * 3;
+			if (this.owner.windowParams.width < minWidth)
+				this.owner.windowParams.width = minWidth;
+				
+			this.owner.refreshLayout();
+		}
+
+	this.resizeHandler.setDragEnd = function(x, y)
+		{
+			this.owner.isDragging = false;
+			this.owner.windowStatusText.setValue(""); // Don't show the size of the window in the status any more
+		}
+		
     this.bgRect = new SVGElement("rect", rectAttributes);    
     this.appendChild(this.bgRect);
+	this.bgRect.addEventListener("mousedown", this.bgRect, false);
+	this.bgRect.addActionListener(this);
 
-    this.titleBar = new FlowLayout(0, 0, {minWidth:this.windowParams.width, flowAlignment:"justify"});
+    this.titleBar = new FlowLayout(0, 0, {flowAlignment:"justify"});
 
     var textHt = this.windowParams.titleBarHeight - 2 * this.windowParams.titleBarGap;
     this.windowTitle = new RectButton("dragWindow", 0, 0, new SVGElement("text", {y:textHt, "font-size":textHt}, this.windowName), {fill:"white", stroke:"none", rx:2, width:20, height:this.windowParams.titleBarHeight}, {fill:"orange"}, {fill:"red"}, this.windowParams.titleBarGap, false);
@@ -2626,24 +2890,52 @@ function SVGWindow(windowName, borderWidth, rectAttributes, windowParams)
     this.titleBar.appendChild(this.closeButton);
     this.closeButton.addActionListener(this);
 
+	// Status bar
+    this.statusBar = new FlowLayout(0, 0, {});
+
+	// Status text
+	this.windowStatusText = new SVGElement("text", {y:textHt, fill:"black", "font-size":textHt}, "");
+	this.windowStatus = new RectLabel(0, 0, this.windowStatusText, {fill:"white", stroke:"none", opacity:"0", width:"100", height:this.windowParams.statusBarHeight}, 0);
+	this.statusBar.appendChild(this.windowStatus);
+
+	// Resize Button
+	var resizeEl = new SVGElement("path", {d:"M9,3.5 L3.5,9 M9,6 L6,9 M9,8 L8,9", fill:"gray", stroke:"black", "stroke-width":"0.6"});
+	var resizeElCover = new SVGElement("path", {d:"M10,0 L10,10 0,10 0,0z", fill:"white", opacity:"0"});
+	this.resizeButton = new ParamButton2("resizeWindow", {x:0, y:0, width:10, height:10, normalElements: {normal:resizeEl, cover:resizeElCover} });
+    this.resizeButton.addActionListener(this);
+	this.statusBar.appendChild(this.resizeButton);
+
     // Contents of the window are inside a scrollbar region.
     this.contents = new FlowLayout(0, 0, {direction:"down", minSpacing:this.windowParams.contentsSpacing});
-	this.scrollbarRegion = new ScrollbarRegion({width:100, height:100, scrollbarWidth:20}, this.contents);
+	this.scrollbarRegion = new ScrollbarRegion({width:100, height:100, scrollbarWidth:this.windowParams.scrollbarWidth}, this.contents);
 
-    // WindowContents is the layout of the whole window - the title bar, then the scrollbar region
-    this.windowContents = new FlowLayout(0, 0, {direction:"down", minSpacing:3});
+    // WindowContents is the layout of the whole window - the title bar, then the scrollbar region, then the resize button
+    this.windowContents = new FlowLayout(0, 0, {direction:"down", flowAlignment:"justify", minSpacing:3});
     this.windowContents.appendChild(this.titleBar);
     this.windowContents.appendChild(this.scrollbarRegion);
     this.appendChild(this.windowContents);
+    this.appendChild(this.statusBar);
+
+    this.fgRect = new SVGElement("rect", rectAttributes);
+	this.fgRect.setAttribute("opacity", "0.3");
+	this.fgRect.setAttribute("fill", "black");
+	this.fgRect.hide();
+	this.appendChild(this.fgRect);
     
     this.refreshLayout();
 }
 
 KevLinDev.extend(SVGWindow, SVGComponent);
 
+// When the window title bar is moved, move the window
 SVGWindow.prototype.setDragPosition = function(x, y)
 {
     this.setPosition(x, y);
+}
+
+// Called when the window has finished dragging.
+SVGWindow.prototype.setDragEnd = function()
+{
 }
 
 SVGWindow.prototype.doAction = function(src, evt)
@@ -2652,12 +2944,33 @@ SVGWindow.prototype.doAction = function(src, evt)
 
     if (src.src == "closeWindow" && evt.type == "click")
     {
-       this.tellActionListeners(this, {type:"closeWindow"});
+        this.tellActionListeners(this, {type:"closeWindow"});
     }
     else if (src.src == "dragWindow" && evt.type == "mousedown")
     {
-       dragndrop_Start(this, evt, this.x, this.y);
+		// Tell listeners that this window has been selected
+		this.tellActionListeners(this, {type:"windowSelected"});
+		
+		// Allow user to drag window
+        dragndrop_Start(this, evt, this.x, this.y);
     }
+    else if (src.src == "resizeWindow")
+    {
+		if (evt.type == "mousedown")
+		{
+			// Allow user to resize window
+			this.resizeHandler.startX= this.x;
+			this.resizeHandler.startY = this.y;
+			this.resizeHandler.startWidth = this.windowParams.width;
+			this.resizeHandler.startHeight = this.windowParams.height;
+	        dragndrop_Start(this.resizeHandler, evt, this.x, this.y);
+		}
+	}
+	else if (src == this.bgRect && evt.type == "mousedown")
+	{
+		// Tell listeners that this window has been selected
+		this.tellActionListeners(this, {type:"windowSelected"});		
+	}
 }
 
 SVGWindow.prototype.setPosition = function(x, y)
@@ -2671,18 +2984,79 @@ SVGWindow.prototype.setPosition = function(x, y)
     }
 }
 
+// The window can be disabled. This is done by putting a semi-opaque black
+// cover over it.
+SVGWindow.prototype.setAble = function(isAble)
+{
+    // Set whether this window is active or not
+    if (isAble)
+		this.fgRect.hide();
+	else
+		this.fgRect.show();
+};
+
 // Recalculate the size using window params
 SVGWindow.prototype.refreshLayout = function()
 {
     // Set the title bar button width
     this.windowTitle.bgElement.rectAttributes.width = this.windowParams.width - this.windowParams.titleBarHeight;
     this.windowTitle.refreshLayout();
+	this.titleBar.refreshLayout();
     
     this.scrollbarRegion.params.width = this.windowParams.width;
-    this.scrollbarRegion.params.height = this.windowParams.height - this.windowParams.titleBarHeight - 3;    
+    this.scrollbarRegion.params.height = this.windowParams.height - this.windowParams.titleBarHeight - 3 - this.windowParams.statusBarHeight;    
     this.scrollbarRegion.refreshLayout();
     this.bgRect.setAttribute("x", -this.borderWidth);
     this.bgRect.setAttribute("y", -this.borderWidth);    
     this.bgRect.setAttribute("width", this.windowParams.width + this.borderWidth * 2);
-    this.bgRect.setAttribute("height", this.windowParams.height + this.borderWidth * 2);    
+    this.bgRect.setAttribute("height", this.windowParams.height + this.borderWidth * 2);
+
+    this.fgRect.setAttribute("x", -this.borderWidth);
+    this.fgRect.setAttribute("y", -this.borderWidth);    
+    this.fgRect.setAttribute("width", this.windowParams.width + this.borderWidth * 2);
+    this.fgRect.setAttribute("height", this.windowParams.height + this.borderWidth * 2);
+	
+	if (this.isDragging)
+		this.windowStatusText.setValue(this.windowParams.width + "x" + this.windowParams.height);
+	
+    this.windowStatus.rectAttributes.width = this.windowParams.width - 10;
+    this.windowStatus.refreshLayout();
+    this.statusBar.setPosition(0, this.windowParams.height - this.windowParams.statusBarHeight);    
+	this.statusBar.refreshLayout();
+	this.windowContents.refreshLayout();
+}
+// Manages a set of windows underneath us.
+//
+// Has the following functionality:
+// - Moves selected window to top of z-order 
+// - Disables all other windows if a window claims exclusive focus (TODO)
+// - Keeps a focus ring of the windows (TODO)
+//
+function SVGWindowManager()
+{
+    SVGWindowManager.baseConstructor.call(this, 0, 0);
+}
+
+KevLinDev.extend(SVGWindowManager, SVGComponent);
+
+// Add a window to the list of windows we're managing
+SVGWindowManager.prototype.addWindow = function(newWindow)
+{
+	this.appendChild(newWindow);
+	newWindow.addActionListener(this);
+}
+
+SVGWindowManager.prototype.setPositionConstraints = function(x, y, width, height)
+{
+	this.childConstraints = {x:x, y:y, width:width, height:height};
+}
+
+SVGWindowManager.prototype.doAction = function(src, evt)
+{
+    SVGWindowManager.superClass.doAction.call(this, src, evt);
+
+    if (evt.type == "windowSelected")
+    {
+		this.appendChild(src);
+	}
 }
