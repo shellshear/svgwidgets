@@ -45,7 +45,7 @@ KevLinDev.extend(ScrollbarRegion, SVGComponent);
 
 ScrollbarRegion.prototype.refreshLayout = function()
 {
-    var bbox = this.contents.getBBox();
+    var bbox = this.contents.getVisualBBox();
     this.xExtent = bbox.x + bbox.width;
     this.yExtent = bbox.y + bbox.height;
    
@@ -117,9 +117,9 @@ ScrollbarRegion.prototype.notifyResize = function(src)
 	this.refreshLayout();
 }
 
-// We need to override the getBBox, because as far as other elements are concerned, we're
+// We need to override the getVisualBBox, because as far as other elements are concerned, we're
 // always the same size.
-ScrollbarRegion.prototype.getBBox = function()
+ScrollbarRegion.prototype.getVisualBBox = function()
 {
 	return {x:this.x, y:this.y, width:this.params.width, height:this.params.height};
 }

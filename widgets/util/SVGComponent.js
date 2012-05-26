@@ -1,3 +1,4 @@
+// An SVG container (actually a group element). Has focus handling.
 function SVGComponent(x, y)
 {
     SVGComponent.baseConstructor.call(this, "g");

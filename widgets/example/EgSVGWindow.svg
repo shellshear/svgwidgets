@@ -32,7 +32,7 @@ function init()
 		{
 			if (evt.type == "click")
 			{
-				boxArea.appendChild(new SVGElement("rect", {width:250, height:250, fill:"yellow", stroke:"black"}));
+				boxArea.appendChild(new SVGElement("rect", {width:50, height:50, fill:"yellow", stroke:"black"}));
 				internalScrollbarRegion.refreshLayout();
 				infoWindow.refreshLayout();
 				evt.stopPropagation();

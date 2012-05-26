@@ -27,23 +27,15 @@ function ParamButton2(src, params)
 	// Default normal apperance
 	if (this.params.normalElements == null)
 	{
-		var normalButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
-		var normalMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
-		var normalCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
-
-		this.params.normalElements = {normal:normalButton, mouseover:normalMouseoverButton, cover:normalCoverButton};
+		this.params.normalElements = {};
+		this.params.normalElements.normal = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
 	}
 
-	// Default selected apperance
 	if (this.params.selectedElements == null)
 	{
-		var selectedButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"black", fill:"none"});
-		var selectedMouseoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"red", fill:"none"});
-		var selectedCoverButton = new SVGElement("rect", {width:10, height:10, rx:2, stroke:"none", fill:"white", opacity:0});
-
- 		this.params.selectedElements = {normal:selectedButton, mouseover:selectedMouseoverButton, cover:selectedCoverButton};
+		this.params.selectedElements = {};
 	}
-
+	
     if (params.width != null || params.height != null)
     {
         // Need to scale all the components
@@ -147,14 +139,14 @@ ParamButton2.prototype.updateAppearance = function()
         return;
     
     // Remove the old appearance
-    if (this.appearance)
-        this.appearance.detach();
-
-    if (!newAppearance)
-        return;        
-    
-    this.appearance = newAppearance;
-    this.prependChild(this.appearance);
+    if (newAppearance != null)
+	{
+        if (this.appearance != null)
+			this.appearance.detach();
+    	
+		this.appearance = newAppearance;
+    	this.prependChild(this.appearance);
+	}
 }
 
 ParamButton2.prototype.doAction = function(src, evt)

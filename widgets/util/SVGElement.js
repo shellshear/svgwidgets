@@ -89,7 +89,7 @@ function cloneElementById(doc, elementId)
     return result;
 }
 
-
+// Clone an existing svg node into our class heirarchy
 SVGElement.prototype.cloneElement = function(existingElement)
 {
     this.wrapElement(existingElement.cloneNode(true));
@@ -225,7 +225,7 @@ SVGElement.prototype.insertBefore = function(newnode, existingnode)
     
     // Need to find the element in our childNodes list too
     var index = 0;
-    for (var i in this.childNodes)
+    for (var i = 0; i < this.childNodes.length; ++i)
     {
         if (this.childNodes[i] == existingnode)
         {
@@ -256,7 +256,7 @@ SVGElement.prototype.removeChild = function(child)
         
     this.svg.removeChild(child.svg);
 
-    for (var i in this.childNodes)
+    for (var i = 0; i < this.childNodes.length; ++i)
     {
      	if (this.childNodes[i] == child)
      	{
@@ -300,6 +300,46 @@ SVGElement.prototype.addEventListener = function(eventListener, target, useCaptu
 {
     this.svg.addEventListener(eventListener, target, useCapture);
 };
+
+// Get the bounding box, taking into account svg bounding windows 
+SVGElement.prototype.getVisualBBox = function()
+{
+	var result = null;
+	if (this.svg.nodeName == "g" || this.svg.nodeName == "svg")
+	{
+		// Need to recurse, because there might be a child with an svg bounding window.
+		// The SVGRoot.getVisualBBox() will catch it if there is.
+		//
+		// TODO: Cope with clip-paths, masks, e.g.:
+		// <defs>
+		//  <clipPath id="clipPath">
+		//    <path id="path" ...>
+		//  </clipPath>
+		// </defs>
+        //
+		// <use id="clipPathBounds" visibility="hidden" xlink:href="path"/>
+		result = {x:0, y:0, width:0, height:0};
+		for (var i = 0; i < this.childNodes.length; ++i)
+		{
+			var currBBox = this.childNodes[i].getVisualBBox();
+			if (currBBox == null)
+				continue;
+				
+			if (result.x > currBBox.x)
+				result.x = currBBox.x;
+			if (result.y > currBBox.y)
+				result.y = currBBox.y;
+			if (result.x + result.width < currBBox.x + currBBox.width)
+				result.width = currBBox.x + currBBox.width - result.x;
+			if (result.y + result.height < currBBox.y + currBBox.height)
+				result.height = currBBox.y + currBBox.height - result.y;
+		}
+	}
+	else 
+		result = this.getBBox();
+
+	return result;
+}
 
 // getBBox
 SVGElement.prototype.getBBox = function()
