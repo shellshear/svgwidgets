@@ -1,0 +1,150 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+	var root = document.getElementById("showarea1");
+	var foo = getVisualBBox(root);	
+	setBBoxRect("bbox1", foo);
+
+	var bar = document.getElementById("foo").getBBox();
+
+	var foo2 = root.getBBox();	
+	setBBoxRect("bbox2", foo2);
+
+	
+}
+
+// Get the visual bbox (taking into account clip-paths, svg nodes, etc.)
+//
+// TODO: Cope with clip-paths, masks, e.g.:
+// <defs>
+//  <clipPath id="clipPath">
+//    <path id="path" ...>
+//  </clipPath>
+// </defs>
+//
+// <use id="clipPathBounds" visibility="hidden" xlink:href="path"/>
+
+function getVisualBBox(node)
+{
+	// Get the union of the visual bounding box of this node and all its children
+	
+	if (node.nodeType != 1)
+		return null;
+		
+	var result = null;
+	if (node.nodeName == "g" || node.nodeName == "svg")
+	{
+		result = {x:0, y:0, width:0, height:0};
+		for (var i = 0; i < node.childNodes.length; ++i)
+		{
+			var currBBox = getVisualBBox(node.childNodes[i]);
+			if (currBBox == null)
+				continue;
+				
+			if (result.x > currBBox.x)
+				result.x = currBBox.x;
+			if (result.y > currBBox.y)
+				result.y = currBBox.y;
+			if (result.x + result.width < currBBox.x + currBBox.width)
+				result.width = currBBox.x + currBBox.width - result.x;
+			if (result.y + result.height < currBBox.y + currBBox.height)
+				result.height = currBBox.y + currBBox.height - result.y;
+		}
+		
+		// Clip the bounding box if there is any kind of clip-path
+		if (node.nodeName == "svg" && node.width != null && node.height != null)
+		{
+			// clip to the svg bounding box
+			var pt  = document.documentElement.createSVGPoint();
+			pt.x = (node.x != null) ? node.x.baseVal.value : 0;
+			pt.y = (node.y != null) ? node.y.baseVal.value : 0;
+			var matrix = node.getScreenCTM();
+			var pt2 = pt.matrixTransform(matrix);
+			pt.x = pt.x + node.width.baseVal.value;
+			pt.y = pt.y + node.height.baseVal.value;
+			var pt3 = pt.matrixTransform(matrix);
+			
+			if (result.x > pt2.x)
+			{
+				result.width -= (result.x - pt2.x);
+				result.x = pt2.x;
+			}
+
+			if (result.width > pt3.x - pt2.x)
+			{
+			 	result.width = pt3.x - pt2.x;
+			}
+			
+			if (result.y > pt2.y)
+			{
+				result.height -= (result.y - pt2.y);
+				result.y = pt2.y;
+			}
+			
+			if (result.height > pt3.y - pt2.y)
+			{
+			 	result.height = pt3.y - pt2.y;
+			}			
+		}
+	}
+	else 
+	{
+		var bbox = node.getBBox();
+		var matrix = node.getScreenCTM();
+		var pt  = document.documentElement.createSVGPoint();
+		pt.x = bbox.x;
+		pt.y = bbox.y;
+		var pt2 = pt.matrixTransform(matrix);
+		pt.x = bbox.x + bbox.width;
+		pt.y = bbox.y + bbox.height;
+		var pt3 = pt.matrixTransform(matrix);
+		result = {};
+		result.x = pt2.x;
+		result.y = pt2.y;
+		result.width = pt3.x - pt2.x;
+		result.height = pt3.y - pt2.y;
+	}
+	return result;
+}
+
+function setBBoxRect(id, bbox)
+{
+	var rect = document.getElementById(id);
+	rect.setAttribute("x", bbox.x);
+	rect.setAttribute("y", bbox.y);
+	rect.setAttribute("width", bbox.width);
+	rect.setAttribute("height", bbox.height);
+}
+
+/*
+// Transform a bounding box from 
+var globalToLocal = dragObject.getTransformToElement(svg).inverse();
+var inObjectSpace = globalPoint.matrixTransform( globalToLocal );
+*/
+
+]]>
+
+</script>
+
+<svg id="foo" x="0" y="0" width="100" height="100">
+    <rect width="200" height="200" fill="red" stroke="black"/>
+</svg>
+
+<svg id="showarea1" x="20" y="20" width="100" height="100">
+	<g transform="translate(30, 30) scale(2)">
+		<rect width="100" height="100" fill="red" stroke="black"/>
+		<circle cx="40" cy="30" r="40" fill="orange" stroke="black"/>
+	</g>
+</svg>
+
+<rect id="bbox1" x="0" y="0" width="0" height="0" fill="green" opacity="0.5"/>
+<rect id="bbox2" x="0" y="0" width="0" height="0" fill="blue" opacity="0.5"/>
+</svg>
+

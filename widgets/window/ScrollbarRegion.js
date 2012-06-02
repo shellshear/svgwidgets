@@ -5,6 +5,8 @@
 // - height - height of the container (default: 100)
 // - scrollbarWidth - width of the scrollbar (default: 10)
 // - scrollbarGap - gap between contents and scrollbar/s (default: 3)
+// - rectBorder - params for a rect that serves as a border. (default: null)
+//                The width and height of the rect will be synchronised to the ScrollbarRegion size.
 function ScrollbarRegion(params, contents)
 {    
     ScrollbarRegion.baseConstructor.call(this, 0, 0);
@@ -21,6 +23,13 @@ function ScrollbarRegion(params, contents)
 
 	if (this.params.height == null)
 	    this.params.height = 100;
+
+	if (this.params.rectBorder != null)
+	{
+		// Put a border on the scrollbar region
+		this.rectBorder = new SVGElement("rect", this.params.rectBorder);
+		this.appendChild(this.rectBorder);
+	}
 
     this.mask = new SVGRoot(0, 0, params.width, params.height);
     this.contents = new SVGComponent(0, 0);
@@ -45,6 +54,12 @@ KevLinDev.extend(ScrollbarRegion, SVGComponent);
 
 ScrollbarRegion.prototype.refreshLayout = function()
 {
+	if (this.rectBorder != null)
+	{
+		this.rectBorder.setAttribute("width", this.params.width);
+		this.rectBorder.setAttribute("height", this.params.height);
+	}
+
     var bbox = this.contents.getVisualBBox();
     this.xExtent = bbox.x + bbox.width;
     this.yExtent = bbox.y + bbox.height;

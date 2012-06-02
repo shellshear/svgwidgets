@@ -301,47 +301,53 @@ SVGElement.prototype.addEventListener = function(eventListener, target, useCaptu
     this.svg.addEventListener(eventListener, target, useCapture);
 };
 
+function replaceClipPaths(el)
+{
+	if (el.nodeType != 1)
+		return;
+	
+	// Handle children first
+	for (var i = 0; i < el.children.length; i++)
+	{
+		var testEl = el.children[i];
+		var newChild = replaceClipPaths(testEl);
+		if (newChild != testEl)
+		{
+			// Replace child
+			el.insertBefore(newChild, testEl);
+			el.removeChild(testEl);
+		}
+	}
+	
+	// Replace any clipping node and its children with a single rectangle
+	if (el.nodeName == "svg" && el.width != null && el.height != null)
+	{
+		var replacementEl = document.createElementNS(svgns, "rect");
+		replacementEl.setAttribute("x", el.getAttribute("x"));
+		replacementEl.setAttribute("y", el.getAttribute("y"));
+		replacementEl.setAttribute("width", el.getAttribute("width"));
+		replacementEl.setAttribute("height", el.getAttribute("height"));
+		replacementEl.setAttribute("stroke", "none");
+		return replacementEl;		
+	}
+	
+	return el;
+}
+
 // Get the bounding box, taking into account svg bounding windows 
 SVGElement.prototype.getVisualBBox = function()
 {
-	var result = null;
-	if (this.svg.nodeName == "g" || this.svg.nodeName == "svg")
-	{
-		// Need to recurse, because there might be a child with an svg bounding window.
-		// The SVGRoot.getVisualBBox() will catch it if there is.
-		//
-		// TODO: Cope with clip-paths, masks, e.g.:
-		// <defs>
-		//  <clipPath id="clipPath">
-		//    <path id="path" ...>
-		//  </clipPath>
-		// </defs>
-        //
-		// <use id="clipPathBounds" visibility="hidden" xlink:href="path"/>
-		result = {x:0, y:0, width:0, height:0};
-		for (var i = 0; i < this.childNodes.length; ++i)
-		{
-			var currBBox = this.childNodes[i].getVisualBBox();
-			if (currBBox == null)
-				continue;
-				
-			if (result.x > currBBox.x)
-				result.x = currBBox.x;
-			if (result.y > currBBox.y)
-				result.y = currBBox.y;
-			if (result.x + result.width < currBBox.x + currBBox.width)
-				result.width = currBBox.x + currBBox.width - result.x;
-			if (result.y + result.height < currBBox.y + currBBox.height)
-				result.height = currBBox.y + currBBox.height - result.y;
-		}
-	}
-	else 
-		result = this.getBBox();
-
-	return result;
+	var cloneEl = this.svg.cloneNode(true);
+	cloneEl = replaceClipPaths(cloneEl);
+	
+	cloneEl.setAttribute("visibility", "hidden");
+    document.documentElement.appendChild(cloneEl);
+	var bbox = cloneEl.getBBox();
+    document.documentElement.removeChild(cloneEl);
+	return bbox;
 }
 
-// getBBox
+// getBBox, fixing some firefox weirdness
 SVGElement.prototype.getBBox = function()
 {
     // Firefox won't calculate bounding box unless the node is

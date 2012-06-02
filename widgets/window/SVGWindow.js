@@ -52,11 +52,11 @@ function SVGWindow(windowName, borderWidth, rectAttributes, windowParams)
     if (this.windowParams.storePrefix && window.localStorage)
     {
         x = localStorage.getItem(this.windowParams.storePrefix + "_x");
-        if (x == null)
+        if (x == null || x < 0)
             x = 0;
 
         y = localStorage.getItem(this.windowParams.storePrefix + "_y");
-        if (y == null)
+        if (y == null || y < 0)
             y = 0;
     }
     SVGWindow.baseConstructor.call(this, x, y);

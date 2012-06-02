@@ -436,47 +436,53 @@ SVGElement.prototype.addEventListener = function(eventListener, target, useCaptu
     this.svg.addEventListener(eventListener, target, useCapture);
 };
 
+function replaceClipPaths(el)
+{
+	if (el.nodeType != 1)
+		return;
+	
+	// Handle children first
+	for (var i = 0; i < el.children.length; i++)
+	{
+		var testEl = el.children[i];
+		var newChild = replaceClipPaths(testEl);
+		if (newChild != testEl)
+		{
+			// Replace child
+			el.insertBefore(newChild, testEl);
+			el.removeChild(testEl);
+		}
+	}
+	
+	// Replace any clipping node and its children with a single rectangle
+	if (el.nodeName == "svg" && el.width != null && el.height != null)
+	{
+		var replacementEl = document.createElementNS(svgns, "rect");
+		replacementEl.setAttribute("x", el.getAttribute("x"));
+		replacementEl.setAttribute("y", el.getAttribute("y"));
+		replacementEl.setAttribute("width", el.getAttribute("width"));
+		replacementEl.setAttribute("height", el.getAttribute("height"));
+		replacementEl.setAttribute("stroke", "none");
+		return replacementEl;		
+	}
+	
+	return el;
+}
+
 // Get the bounding box, taking into account svg bounding windows 
 SVGElement.prototype.getVisualBBox = function()
 {
-	var result = null;
-	if (this.svg.nodeName == "g" || this.svg.nodeName == "svg")
-	{
-		// Need to recurse, because there might be a child with an svg bounding window.
-		// The SVGRoot.getVisualBBox() will catch it if there is.
-		//
-		// TODO: Cope with clip-paths, masks, e.g.:
-		// <defs>
-		//  <clipPath id="clipPath">
-		//    <path id="path" ...>
-		//  </clipPath>
-		// </defs>
-        //
-		// <use id="clipPathBounds" visibility="hidden" xlink:href="path"/>
-		result = {x:0, y:0, width:0, height:0};
-		for (var i = 0; i < this.childNodes.length; ++i)
-		{
-			var currBBox = this.childNodes[i].getVisualBBox();
-			if (currBBox == null)
-				continue;
-				
-			if (result.x > currBBox.x)
-				result.x = currBBox.x;
-			if (result.y > currBBox.y)
-				result.y = currBBox.y;
-			if (result.x + result.width < currBBox.x + currBBox.width)
-				result.width = currBBox.x + currBBox.width - result.x;
-			if (result.y + result.height < currBBox.y + currBBox.height)
-				result.height = currBBox.y + currBBox.height - result.y;
-		}
-	}
-	else 
-		result = this.getBBox();
-
-	return result;
+	var cloneEl = this.svg.cloneNode(true);
+	cloneEl = replaceClipPaths(cloneEl);
+	
+	cloneEl.setAttribute("visibility", "hidden");
+    document.documentElement.appendChild(cloneEl);
+	var bbox = cloneEl.getBBox();
+    document.documentElement.removeChild(cloneEl);
+	return bbox;
 }
 
-// getBBox
+// getBBox, fixing some firefox weirdness
 SVGElement.prototype.getBBox = function()
 {
     // Firefox won't calculate bounding box unless the node is
@@ -2712,6 +2718,8 @@ Scrollbar.prototype.doAction = function(src, evt)
 // - height - height of the container (default: 100)
 // - scrollbarWidth - width of the scrollbar (default: 10)
 // - scrollbarGap - gap between contents and scrollbar/s (default: 3)
+// - rectBorder - params for a rect that serves as a border. (default: null)
+//                The width and height of the rect will be synchronised to the ScrollbarRegion size.
 function ScrollbarRegion(params, contents)
 {    
     ScrollbarRegion.baseConstructor.call(this, 0, 0);
@@ -2728,6 +2736,13 @@ function ScrollbarRegion(params, contents)
 
 	if (this.params.height == null)
 	    this.params.height = 100;
+
+	if (this.params.rectBorder != null)
+	{
+		// Put a border on the scrollbar region
+		this.rectBorder = new SVGElement("rect", this.params.rectBorder);
+		this.appendChild(this.rectBorder);
+	}
 
     this.mask = new SVGRoot(0, 0, params.width, params.height);
     this.contents = new SVGComponent(0, 0);
@@ -2752,6 +2767,12 @@ KevLinDev.extend(ScrollbarRegion, SVGComponent);
 
 ScrollbarRegion.prototype.refreshLayout = function()
 {
+	if (this.rectBorder != null)
+	{
+		this.rectBorder.setAttribute("width", this.params.width);
+		this.rectBorder.setAttribute("height", this.params.height);
+	}
+
     var bbox = this.contents.getVisualBBox();
     this.xExtent = bbox.x + bbox.width;
     this.yExtent = bbox.y + bbox.height;
@@ -2886,11 +2907,11 @@ function SVGWindow(windowName, borderWidth, rectAttributes, windowParams)
     if (this.windowParams.storePrefix && window.localStorage)
     {
         x = localStorage.getItem(this.windowParams.storePrefix + "_x");
-        if (x == null)
+        if (x == null || x < 0)
             x = 0;
 
         y = localStorage.getItem(this.windowParams.storePrefix + "_y");
-        if (y == null)
+        if (y == null || y < 0)
             y = 0;
     }
     SVGWindow.baseConstructor.call(this, x, y);

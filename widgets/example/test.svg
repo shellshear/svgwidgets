@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewbox="0 0 1000 1000" onload="init()">
+
+<script type="text/ecmascript">
+
+<![CDATA[
+
+function init()
+{
+	var a1 = document.getElementById("a1");
+	var a2 = document.getElementById("a2");
+
+	setBBoxRect("bbox1", a1.getBBox());	
+	setBBoxRect("bbox2", getConstrainedBBox(a1));	
+}
+
+function setBBoxRect(id, bbox)
+{
+	var rect = document.getElementById(id);
+	rect.setAttribute("x", bbox.x);
+	rect.setAttribute("y", bbox.y);
+	rect.setAttribute("width", bbox.width);
+	rect.setAttribute("height", bbox.height);
+}
+
+function getConstrainedBBox(el)
+{
+	var cloneEl = el.cloneNode(true);
+	cloneEl = replaceClipPaths(cloneEl);
+	
+	cloneEl.setAttribute("visibility", "hidden");
+    document.documentElement.appendChild(cloneEl);
+	var bbox = cloneEl.getBBox();
+    document.documentElement.removeChild(cloneEl);
+	return bbox;
+}
+
+function replaceClipPaths(el)
+{
+	if (el.nodeType != 1)
+		return;
+	
+	// Handle children first
+	for (var i = 0; i < el.children.length; i++)
+	{
+		replaceClipPaths(el.children[i]);
+	}
+	
+	// Replace any clipping node and its children with a single rectangle
+	if (el.nodeName == "svg" && el.width != null && el.height != null)
+	{
+		var replacementEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+		replacementEl.setAttribute("x", el.getAttribute("x"));
+		replacementEl.setAttribute("y", el.getAttribute("y"));
+		replacementEl.setAttribute("width", el.getAttribute("width"));
+		replacementEl.setAttribute("height", el.getAttribute("height"));
+		replacementEl.setAttribute("stroke", "none");
+		return replacementEl;		
+	}
+	
+	return el;
+}
+
+]]>
+
+</script>
+
+<svg id="a1" x="10" y="0" width="100" height="100">
+    <rect width="200" height="200" x="0" y="0" fill="red" stroke="black"/>
+</svg>
+
+<svg id="a2" x="20" y="20" width="100" height="100">
+	<g transform="translate(30, 30) scale(2)">
+		<rect width="100" height="100" fill="red" stroke="black"/>
+		<circle cx="40" cy="30" r="40" fill="orange" stroke="black"/>
+	</g>
+</svg>
+
+<rect id="bbox1" x="0" y="0" width="0" height="0" fill="green" opacity="0.5"/>
+<rect id="bbox2" x="0" y="0" width="0" height="0" fill="blue" opacity="0.5"/>
+</svg>
+
