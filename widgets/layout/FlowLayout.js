@@ -1,5 +1,8 @@
 // FlowLayout automatically lays out contained children in a horizontal
 // or vertical line.
+// It does not respect the x and y position of the contained children, 
+// modifying them as required to fit into the area.
+// 
 // Parameters are:
 //     direction: "up", "down", "left" or "right". Default is "right".
 //     minSpacing: Minimum spacing between layout elements. Default is 0.
@@ -177,15 +180,17 @@ FlowLayout.prototype.refreshLayout = function()
         this.maxOrthogonal = 0;
         for (var i in this.childNodes)
         {
+			var bbox = this.childNodes[i].getBBox();
+			
             switch (this.layoutParams.direction)
             {
             case "left":
             case "right":
-                this.maxOrthogonal = Math.max(this.maxOrthogonal, this.childNodes[i].getBBox().height);
+                this.maxOrthogonal = Math.max(this.maxOrthogonal, bbox.height);
                 break;
             case "up":
             case "down":
-                this.maxOrthogonal = Math.max(this.maxOrthogonal, this.childNodes[i].getBBox().width);
+                this.maxOrthogonal = Math.max(this.maxOrthogonal, bbox.width);
                 break;
             }
         }
@@ -197,15 +202,17 @@ FlowLayout.prototype.refreshLayout = function()
         var elCount = 0;
         for (var i in this.childNodes)
         {
+			var bbox = this.childNodes[i].getBBox();
+			
             switch (this.layoutParams.direction)
             {
             case "left":
             case "right":
-                sumLength += this.childNodes[i].getBBox().width;
+                sumLength += bbox.width;
                 break;
             case "up":
             case "down":
-                sumLength += this.childNodes[icurrentX].getBBox().height;
+                sumLength += bbox.height;
                 break;
             }
             elCount++;

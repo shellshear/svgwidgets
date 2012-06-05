@@ -2025,6 +2025,9 @@ KevLinDev.extend(MultilineText, SVGComponent);
 
 // FlowLayout automatically lays out contained children in a horizontal
 // or vertical line.
+// It does not respect the x and y position of the contained children, 
+// modifying them as required to fit into the area.
+// 
 // Parameters are:
 //     direction: "up", "down", "left" or "right". Default is "right".
 //     minSpacing: Minimum spacing between layout elements. Default is 0.
@@ -2202,15 +2205,17 @@ FlowLayout.prototype.refreshLayout = function()
         this.maxOrthogonal = 0;
         for (var i in this.childNodes)
         {
+			var bbox = this.childNodes[i].getBBox();
+			
             switch (this.layoutParams.direction)
             {
             case "left":
             case "right":
-                this.maxOrthogonal = Math.max(this.maxOrthogonal, this.childNodes[i].getBBox().height);
+                this.maxOrthogonal = Math.max(this.maxOrthogonal, bbox.height);
                 break;
             case "up":
             case "down":
-                this.maxOrthogonal = Math.max(this.maxOrthogonal, this.childNodes[i].getBBox().width);
+                this.maxOrthogonal = Math.max(this.maxOrthogonal, bbox.width);
                 break;
             }
         }
@@ -2222,15 +2227,17 @@ FlowLayout.prototype.refreshLayout = function()
         var elCount = 0;
         for (var i in this.childNodes)
         {
+			var bbox = this.childNodes[i].getBBox();
+			
             switch (this.layoutParams.direction)
             {
             case "left":
             case "right":
-                sumLength += this.childNodes[i].getBBox().width;
+                sumLength += bbox.width;
                 break;
             case "up":
             case "down":
-                sumLength += this.childNodes[icurrentX].getBBox().height;
+                sumLength += bbox.height;
                 break;
             }
             elCount++;
@@ -2587,6 +2594,8 @@ Slider.prototype.doAction = function(src, evt)
 
 
 // Scrollbar
+// Consists of an up/left button, scrollbar region, and down/right button. 
+// The scrollbar region consists of a background area with a dragbar on top of it.
 // params:
 // orientation - "h" or "v"
 // width - width of the scrollbar
@@ -2634,48 +2643,61 @@ function Scrollbar(params)
     this.fwdButton.addActionListener(this);
     this.appendChild(this.fwdButton);
     
-    this.position = 0;
-    this.scrollbarLength = 0;
-    this.dragbarLength = 0;
-    this.dragbarProportion = 0;
+    this.position = 0; // The position of the top of the dragbar
+    this.scrollbarLength = 0; // The length of the scrollbar background
+    this.dragbarLength = 0; // The length of the dragbar
 }
 
 KevLinDev.extend(Scrollbar, FlowLayout);
 
-Scrollbar.prototype.update = function(scrollbarLength, dragbarProportion)
+// Update the length and position of the dragbar. 
+// internalLength - the length of the contents that the scrollbar is applied to
+// externalLength - the length of the container
+// position - the position in the contents to be placed at the top of the container
+Scrollbar.prototype.updateScrollbar = function(internalLength, externalLength, position)
 {
-    this.scrollbarLength = scrollbarLength;
-    this.dragbarProportion = dragbarProportion < 0 ? 0 : (dragbarProportion > 1 ? 1 : dragbarProportion);
-    this.dragbarLength = this.dragbarProportion * scrollbarLength;
+    this.scrollbarLength = externalLength - 2 * this.params.width; // Take into account the buttons
+    this.dragbarLength = externalLength / internalLength * this.scrollbarLength;
+	if (this.dragbarLength > this.scrollbarLength)
+		this.dragbarLength = this.scrollbarLength;
    
     if (this.params.orientation == "h")
     {
-       this.scrollBg.setAttribute("width", this.scrollbarLength);
-       this.scrollTop.bgElement.rectAttributes.width = this.dragbarLength;
+        this.scrollBg.setAttribute("width", this.scrollbarLength);
+        this.scrollTop.bgElement.rectAttributes.width = this.dragbarLength;
     }
     else
     {
-       this.scrollBg.setAttribute("height", this.scrollbarLength);
-       this.scrollTop.bgElement.rectAttributes.height = this.dragbarLength;
+        this.scrollBg.setAttribute("height", this.scrollbarLength);
+        this.scrollTop.bgElement.rectAttributes.height = this.dragbarLength;
     }
-   
+
+	// Work out the position on the scrollbar of the dragbar
+	var scrollbarPos = 0;
+	if (internalLength - externalLength > 0)
+		scrollbarPos = position * (this.scrollbarLength - this.dragbarLength) / (internalLength - externalLength);
+    var retVal = this.setScrollbarPosition(scrollbarPos);
+
     this.scrollTop.refreshLayout();
     this.refreshLayout();
+
+	return retVal; // This is an update to the position
 }
 
 Scrollbar.prototype.setDragPosition = function(x, y)
 {
     this.setScrollbarPosition(this.params.orientation == "h" ? x : y);
+    this.tellActionListeners(this, {type:"dragScrollbar", position:this.position / (this.scrollbarLength - this.dragbarLength)});
 }
 
 Scrollbar.prototype.setDragEnd = function()
 {
 }
 
-// Set the scrollbar position, as a number between 0 and 1
+// Set the scrollbar position
 Scrollbar.prototype.setScrollbarPosition = function(position)
 {
-    this.position = position < 0 ? 0 : (position > (this.scrollbarLength - this.dragbarLength) ? (this.scrollbarLength - this.dragbarLength) : position);
+    this.position = position < 0 ? 0 : ((position > this.scrollbarLength - this.dragbarLength) ? this.scrollbarLength - this.dragbarLength : position);
     
     if (this.params.orientation == "h")
     {
@@ -2686,8 +2708,7 @@ Scrollbar.prototype.setScrollbarPosition = function(position)
         this.scrollTop.setPosition(0, this.position);
     }
 
-    this.tellActionListeners(this, {type:"dragScrollbar", position:this.position / (this.scrollbarLength - this.dragbarLength)});
-    
+	return this.position;
 }
 
 Scrollbar.prototype.doAction = function(src, evt)
@@ -2701,10 +2722,12 @@ Scrollbar.prototype.doAction = function(src, evt)
         if (src.src == "backButton")
         {
             this.setScrollbarPosition(this.position - this.dragbarLength / 2);
+		    this.tellActionListeners(this, {type:"dragScrollbar", position:this.position / (this.scrollbarLength - this.dragbarLength)});
         }
         else if (src.src == "fwdButton")
         {            
             this.setScrollbarPosition(this.position + this.dragbarLength / 2);
+		    this.tellActionListeners(this, {type:"dragScrollbar", position:this.position / (this.scrollbarLength - this.dragbarLength)});
         }
 		evt.stopPropagation();
     }
@@ -2737,6 +2760,10 @@ function ScrollbarRegion(params, contents)
 	if (this.params.height == null)
 	    this.params.height = 100;
 
+	// Initial scroll position
+	this.scroll_x = 0; 
+	this.scroll_y = 0;
+
 	if (this.params.rectBorder != null)
 	{
 		// Put a border on the scrollbar region
@@ -2765,6 +2792,8 @@ function ScrollbarRegion(params, contents)
 
 KevLinDev.extend(ScrollbarRegion, SVGComponent);
 
+// Refresh the layout of the scrollbar region.
+// Resize the scrollbars if necessary.
 ScrollbarRegion.prototype.refreshLayout = function()
 {
 	if (this.rectBorder != null)
@@ -2774,29 +2803,30 @@ ScrollbarRegion.prototype.refreshLayout = function()
 	}
 
     var bbox = this.contents.getVisualBBox();
-    this.xExtent = bbox.x + bbox.width;
-    this.yExtent = bbox.y + bbox.height;
+    this.xExtent = bbox.width; // The extent of the contents 
+    this.yExtent = bbox.height;
    
+	// Show the horizontal scrollbar if the x extent is larger than the width of the scroll window
     var showH = (this.xExtent > this.params.width);
     
     var scrollSpace = this.params.scrollbarWidth + this.params.scrollbarGap;
     
-    // showV may be required if we just had to showH
+    // Show the vertical scrollbar if necessary
     var showV = (this.yExtent > (showH ? this.params.height - scrollSpace : this.params.height));
-    // showH needs to be recalculated - it may be required if we just had to showV
+    
+	// showH needs to be recalculated - it may be required if we just had to showV
     showH = (this.xExtent > (showV ? this.params.width - scrollSpace : this.params.width));
     
     this.effectiveWidth = showV ? this.params.width - scrollSpace : this.params.width;
     this.effectiveHeight = showH ? this.params.height - scrollSpace : this.params.height;
 
-    var scrollbarWidth = this.effectiveWidth - 2 * this.params.scrollbarWidth;
-    var hProportion = this.effectiveWidth / this.xExtent;
-    this.hBar.update(scrollbarWidth, hProportion);
+    this.updateContentPosition();
+
+	// Update the horizontal scrollbar.
+    this.hBar.updateScrollbar(this.xExtent, this.effectiveWidth, this.scroll_x);
     this.hBar.setPosition(0, this.effectiveHeight + this.params.scrollbarGap);
 
-    var scrollbarHeight = this.effectiveHeight - 2 * this.params.scrollbarWidth;
-    var vProportion = this.effectiveHeight / this.yExtent;
-    this.vBar.update(scrollbarHeight, vProportion);
+    this.vBar.updateScrollbar(this.yExtent, this.effectiveHeight, this.scroll_y);
     this.vBar.setPosition(this.effectiveWidth + this.params.scrollbarGap, 0);
 
     if (showH)
@@ -2806,7 +2836,6 @@ ScrollbarRegion.prototype.refreshLayout = function()
     }
     else
     {
-        this.contents.setPosition(this.contents.x, 0);
         this.mask.setAttribute("height", this.params.height);
         this.hBar.hide();
     }
@@ -2818,24 +2847,68 @@ ScrollbarRegion.prototype.refreshLayout = function()
     }
     else
     {
-        this.contents.setPosition(this.contents.x, 0);
         this.mask.setAttribute("width", this.params.width);
         this.vBar.hide();
     }
+
+}
+
+// Set the scrollbar position, as a percentage of the possible range
+// orientation is "h" or "v"
+// position is a number from 0 to 1
+ScrollbarRegion.prototype.updateScrollbarPosition = function(orientation, position)
+{
+	this.scroll_x = -this.contents.x;
+	this.scroll_y = -this.contents.y;
+	
+	if (orientation == "h")
+	{
+    	this.scroll_x = (this.xExtent - this.effectiveWidth) * position;
+	}
+	else
+	{
+    	this.scroll_y = (this.yExtent - this.effectiveHeight) * position;
+	}
+	
+	this.updateContentPosition();
+}
+
+ScrollbarRegion.prototype.updateContentPosition = function()
+{
+	// Update the current position of the contents within the scroll window
+	// if necessary. 
+	// 
+	// <--------------xExtent----------------->
+	// <--scroll_x-><---effectiveWidth--->    
+	//            <------params.width------>
+	if (this.scroll_x + this.effectiveWidth > this.xExtent)
+	{
+		this.scroll_x = this.xExtent - this.effectiveWidth;
+	}
+	
+	if (this.scroll_x < 0)
+	{
+		this.scroll_x = 0;
+	}
+
+	if (this.scroll_y + this.effectiveHeight > this.yExtent)
+	{
+		this.scroll_y = this.yExtent - this.effectiveHeight;
+	}
+	
+	if (this.scroll_y < 0)
+	{
+		this.scroll_y = 0;
+	}
+
+	this.contents.setPosition(-this.scroll_x, -this.scroll_y);
 }
 
 ScrollbarRegion.prototype.doAction = function(src, evt)
 {
     if (evt.type == "dragScrollbar")
     {
-       if (src.params.orientation == "h")
-       {
-           this.contents.setPosition(-(this.xExtent - this.effectiveWidth) * evt.position, this.contents.y);
-       }
-       else
-       {
-           this.contents.setPosition(this.contents.x, -(this.yExtent - this.effectiveHeight) * evt.position);
-       }
+		this.updateScrollbarPosition(src.params.orientation, evt.position);
     }
 }
 
@@ -2844,15 +2917,6 @@ ScrollbarRegion.prototype.notifyResize = function(src)
     ScrollbarRegion.superClass.notifyResize.call(this, src);
 	this.refreshLayout();
 }
-
-// We need to override the getVisualBBox, because as far as other elements are concerned, we're
-// always the same size.
-ScrollbarRegion.prototype.getVisualBBox = function()
-{
-	return {x:this.x, y:this.y, width:this.params.width, height:this.params.height};
-}
-
-
 // A window is a rectLabel containing a vertical FlowLayout with the first element being a title bar
 // windowParams can have the following params:
 // width            - width of the window (default: 200)
