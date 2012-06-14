@@ -35,7 +35,7 @@ function ScrollbarRegion(params, contents)
 		this.appendChild(this.rectBorder);
 	}
 
-    this.mask = new SVGRoot(0, 0, params.width, params.height);
+    this.mask = new SVGRoot({width:params.width, height:params.height});
     this.contents = new SVGComponent(0, 0);
     this.contents.appendChild(contents);
     this.mask.appendChild(this.contents);

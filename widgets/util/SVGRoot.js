@@ -1,40 +1,58 @@
 // A root SVG element that has a clipping bounding box
-function SVGRoot(x, y, width, height)
+function SVGRoot(clipBox)
 {
-    SVGComponent.baseConstructor.call(this, "svg", {x:x, y:y, width:width, height:height});
+	this.clipBox = clipBox;
+	
+	if (this.clipBox == null)
+	{
+		this.clipBox = {};
+	}
+	
+	if (this.clipBox.x == null)
+	{
+		this.clipBox.x = 0;
+	}
+    
+	if (this.clipBox.y == null)
+	{
+		this.clipBox.y = 0;
+	}
+
+	if (this.clipBox.width == null)
+	{
+		this.clipBox.width = 0;
+	}
+
+	if (this.clipBox.height == null)
+	{
+		this.clipBox.height = 0;
+	}
+	
+	SVGComponent.baseConstructor.call(this, "svg", this.clipBox);
 }
 
 KevLinDev.extend(SVGRoot, SVGElement);
 
 SVGRoot.prototype.setPosition = function(x, y)
 {
-    if (x == null)
-       x = 0;
-
-    if (y == null)
-       y = 0;
-
-    this.svg.setAttribute("x", x);
-    this.svg.setAttribute("y", y);
+    if (x != null)
+	{
+       	this.clipBox.x = x;
+    	this.setAttribute("x", x);
+	}
+    
+	if (y != null)
+    {
+   		this.clipBox.y = y;
+	    this.setAttribute("y", y);
+	}
 }
 
-SVGRoot.prototype.getVisualBBox = function()
+SVGRoot.prototype.setClipRect = function(bbox)
 {
-	var result = SVGRoot.superClass.getVisualBBox.call(this);
-    var x = this.getAttribute("x");
-    var y = this.getAttribute("y");
-    var width = this.getAttribute("width");
-    var height = this.getAttribute("height");
-
-	// Restrict the bbox to the contents here.
-	if (result.x < x)
-		result.x = x;
-	if (result.y < y)
-		result.y = y;
-	if (result.x + result.width > x + width)
-		result.width = x + width - result.x;
-	if (result.y + result.height > y + height)
-		result.height = y + height - result.y;
-	
-	return result;
+	this.clipBox = bbox;
+	this.setAttribute("x", this.clipBox.x);
+	this.setAttribute("y", this.clipBox.y);
+	this.setAttribute("width", this.clipBox.width);
+	this.setAttribute("height", this.clipBox.height);
 }

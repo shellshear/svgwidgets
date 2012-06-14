@@ -82,36 +82,37 @@ function Slider(params)
     this.slider.appendChild(this.scrollTop);
     this.appendChild(this.slider);
    
-	this.setSliderPosition(this.params.startPosition * this.params.sliderLength);
+	this.setSliderPosition(this.params.startPosition);
 }
 
 KevLinDev.extend(Slider, SVGComponent);
 
 Slider.prototype.setDragPosition = function(x, y)
 {
-    this.setSliderPosition(this.params.orientation == "h" ? x : y);
+	var position = (this.params.orientation == "h" ? x : y) / (this.params.sliderLength - this.params.draggerWidth);
+    this.setSliderPosition(position);
 }
 
 Slider.prototype.setDragEnd = function()
 {
 }
 
-// Set the Slider position
+// Set the slider position as a proportion of its length
 Slider.prototype.setSliderPosition = function(position)
 {
-    this.position = position < 0 ? 0 : (position > (this.params.sliderLength - this.params.draggerWidth) ? (this.params.sliderLength - this.params.draggerWidth) : position);
-    
+	this.sliderPosition = position < 0 ? 0 : (position > 1.0 ? 1.0 : position);
+	var absolutePosition = this.sliderPosition * (this.params.sliderLength - this.params.draggerWidth);
+	
     if (this.params.orientation == "h")
     {
-        this.scrollTop.setPosition(this.position, 0);
+        this.scrollTop.setPosition(absolutePosition, 0);
     }
     else
     {
-        this.scrollTop.setPosition(0, this.position);
+        this.scrollTop.setPosition(0, absolutePosition);
     }
 
-    this.tellActionListeners(this, {type:"dragSlider", position:this.position / (this.params.sliderLength - this.params.draggerWidth)});
-    
+    this.tellActionListeners(this, {type:"dragSlider", position:this.sliderPosition});
 }
 
 Slider.prototype.doAction = function(src, evt)
@@ -133,7 +134,7 @@ Slider.prototype.doAction = function(src, evt)
 			currPos = (evt.clientY - this.svg.getCTM().f) - 0.5 * this.params.draggerWidth;
 		}
 	    
-		this.setSliderPosition(currPos);
+		this.setSliderPosition(currPos / (this.params.sliderLength - this.params.draggerWidth));
 	}
 }
 
