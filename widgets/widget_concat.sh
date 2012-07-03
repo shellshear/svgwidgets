@@ -5,6 +5,7 @@ cat \
     util/SVGElement.js \
     util/SVGRoot.js \
     util/SVGComponent.js \
+    util/colorTweaker.js \
     button/SimpleButton.js \
     button/ParamButton.js \
     button/ParamButton2.js \
