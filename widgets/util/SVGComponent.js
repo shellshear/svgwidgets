@@ -65,7 +65,7 @@ SVGComponent.prototype.setPosition = function(x, y)
 
     this.svg.setAttribute("transform", scaleString + "translate(" + this.x + "," + this.y + ") ");
     
-    for (var i in this.auxiliaryComponents)
+    for (var i = 0; i < this.auxiliaryComponents.length; ++i)
     {
         this.auxiliaryComponents[i].setPosition(x, y);
     }
@@ -84,7 +84,7 @@ SVGComponent.prototype.setScale = function(scale)
 
     this.svg.setAttribute("transform", scaleString + "translate(" + this.x + "," + this.y + ") ");
     
-    for (var i in this.auxiliaryComponents)
+    for (var i = 0; i < this.auxiliaryComponents.length; ++i)
     {
         this.auxiliaryComponents[i].setScale(scale);
     }
@@ -212,7 +212,7 @@ SVGComponent.prototype.addFocusListener = function(focusListener)
 
 SVGComponent.prototype.removeFocusListener = function(focusListener)
 {
-    for (var i in this.focusListeners)
+    for (var i = 0; i < this.focusListeners.length; ++i)
     {
      if (this.focusListeners[i] == focusListener)
      {
@@ -230,7 +230,7 @@ SVGComponent.prototype.clearFocusListeners = function()
 SVGComponent.prototype.tellFocusListeners = function(src)
 {
     // Tell the focus listeners
-    for (var i in this.focusListeners)
+    for (var i = 0; i < this.focusListeners.length; ++i)
     {
      this.focusListeners[i].focusChangeRequest(src);
     }
@@ -248,7 +248,7 @@ SVGComponent.prototype.focusChangeRequest = function(src)
 SVGComponent.prototype.toXML = function()
 {
     var str = "<base src='" + this.src + "'>";
-    for (var i in this.actionListeners)
+    for (var i = 0; i < this.actionListeners.length; ++i)
     {
      str += "<listener src='" + this.actionListeners[i].src + "'/>";
     }

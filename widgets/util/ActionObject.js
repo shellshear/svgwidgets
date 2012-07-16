@@ -14,7 +14,7 @@ ActionObject.prototype.addActionListener = function(actionListener)
 
 ActionObject.prototype.removeActionListener = function(actionListener)
 {
-    for (var i in this.actionListeners)
+    for (var i = 0; i < this.actionListeners.length; ++i)
     {
      	if (this.actionListeners[i] == actionListener)
      	{
@@ -37,7 +37,7 @@ ActionObject.prototype.handleEvent = function(evt)
 ActionObject.prototype.tellActionListeners = function(src, evt)
 {
     // Tell the action listeners
-    for (var i in this.actionListeners)
+    for (var i = 0; i < this.actionListeners.length; ++i)
     {
      	this.actionListeners[i].doAction(src, evt);
     }
@@ -50,7 +50,7 @@ ActionObject.prototype.addResizeListener = function(resizeListener)
 
 ActionObject.prototype.removeResizeListener = function(resizeListener)
 {
-    for (var i in this.resizeListeners)
+    for (var i = 0; i < this.resizeListeners.length; ++i)
     {
      	if (this.resizeListeners[i] == resizeListener)
      	{
@@ -68,7 +68,7 @@ ActionObject.prototype.clearResizeListeners = function()
 ActionObject.prototype.tellResizeListeners = function(src)
 {
     // Tell the action listeners
-    for (var i in this.resizeListeners)
+    for (var i = 0; i < this.resizeListeners.length; ++i)
     {
      	this.resizeListeners[i].notifyResize(src);
     }
