@@ -72,3 +72,15 @@ function createXMLDoc(elementName)
 	return result;
 }
 
+function cloneObject(obj)
+{
+	if (obj == null || typeof(obj) != 'object')
+		return obj;
+	
+	var tmp = obj.constructor();
+	
+	for (var i in obj)
+		tmp[i] = cloneObject(obj[i]);
+	
+	return tmp;
+}
