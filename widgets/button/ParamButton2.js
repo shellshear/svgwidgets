@@ -158,28 +158,29 @@ ParamButton2.prototype.doAction = function(src, evt)
         if (evt.type == "mouseover")
         {
             this.isMouseover = true;
-        }
+            this.updateAppearance();
+	    }
         else if (evt.type == "mouseout")
         {
             this.isMouseover = false;
-        }
+            this.updateAppearance();
+	    }
         else if (evt.type == "mousedown")
         {
             if (this.doToggle)
             {
-                this.isSelected = !this.isSelected;
+                this.setSelected(!this.isSelected);
             }
             else
             {
-                this.isSelected = true;
+                this.setSelected(true);
             }
         }
         else if (evt.type == "mouseup")
         {
             //this.isSelected = false;
-        }
-
-        this.updateAppearance();
+            this.updateAppearance();
+	    }
     }
 };
 
@@ -190,11 +191,15 @@ ParamButton2.prototype.setAble = function(isAble)
     this.updateAppearance();
 };
 
+// Set whether this button is selected or not
 ParamButton2.prototype.setSelected = function(isSelected)
 {
-    // Set whether this button is selected or not
+	if (this.isSelected == isSelected)
+		return;
+		
     this.isSelected = isSelected;
     this.updateAppearance();
+	this.tellActionListeners(this, {type:"selection", value:this.isSelected});
 };
 
 ParamButton2.prototype.setToggle = function(doToggle)

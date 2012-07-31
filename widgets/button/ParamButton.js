@@ -81,16 +81,19 @@ ParamButton.prototype.doAction = function(src, evt)
              if (this.toggleState == true)
              {                        
                  this.svg_select.show();
+		 		 this.tellActionListeners(this, {type:"selection", value:true});
              }
              else
              {
                  this.svg_select.hide();
+		 		 this.tellActionListeners(this, {type:"selection", value:false});
              }
              
          }
          else
          {
              this.svg_select.show();
+	 		 this.tellActionListeners(this, {type:"selection", value:true});
          }
      }
      else if (evt.type == "mouseup" && !this.doToggle)
@@ -130,6 +133,7 @@ ParamButton.prototype.setSelected = function(isSelected)
        if (this.doToggle)
            this.toggleState = false;
     }
+	this.tellActionListeners(this, {type:"selection", value:isSelected});
 }
 
 ParamButton.prototype.setToggle = function(doToggle)
