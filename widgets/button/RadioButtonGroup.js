@@ -1,8 +1,13 @@
 // Radio button group ensures only one button can be in "selected" state.
-function RadioButtonGroup()
+function RadioButtonGroup(params)
 {
     this.buttons = [];
     this.currentSelection = null;
+	this.params = params;
+	if (this.params == null)
+		this.params = {};
+	if (this.params.allowNoSelection == null)
+		this.params.allowNoSelection = true;
 }
 
 RadioButtonGroup.prototype.addButton = function(button)
@@ -22,8 +27,12 @@ RadioButtonGroup.prototype.doAction = function(src, evt)
 RadioButtonGroup.prototype.setSelected = function(src)
 {
     this.currentSelection = src;
-    src.setSelected(true);
-    
+
+	if (!this.params.allowNoSelection)
+	{
+    	src.setSelected(true);
+    }
+
     // Unselect all the other buttons
     for (var i in this.buttons)
     {
