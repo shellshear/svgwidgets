@@ -247,9 +247,12 @@ function setLightLevel(svgNode, level, groupId)
 		
 	}
 
-	for (var i = 0; i < svgNode.children.length; ++i)
+	for (var i = 0; i < svgNode.childNodes.length; ++i)
 	{
-		setLightLevel(svgNode.children[i], level, groupId);
+		if (svgNode.childNodes[i].nodeType != 1)
+			continue;
+		
+		setLightLevel(svgNode.childNodes[i], level, groupId);
 	}
 }
 
@@ -448,9 +451,11 @@ function setChangeableColor(svgNode, newColor, groupId)
 		}
 	}
 
-	for (var i = 0; i < svgNode.children.length; ++i)
+	for (var i = 0; i < svgNode.childNodes.length; ++i)
 	{
-		setChangeableColor(svgNode.children[i], newColor, groupId);
+		if (svgNode.childNodes[i].nodeType != 1)
+			continue;
+		setChangeableColor(svgNode.childNodes[i], newColor, groupId);
 	}
 }
 

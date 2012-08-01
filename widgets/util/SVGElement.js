@@ -48,10 +48,14 @@ SVGElement.prototype.wrapElement = function(existingElement)
         this.showing = false;
     
     // Also wrap all the children
-    for (var i = 0; i < existingElement.children.length; i++)
+    for (var i = 0; i < existingElement.childNodes.length; i++)
     {
+		var currChild = existingElement.childNodes[i];
+		if (currChild.nodeType != 1)
+			continue;
+			
         var child = new SVGElement();
-        child.wrapElement(existingElement.children[i]);
+        child.wrapElement(currChild);
 
         // We wish to append the child, but the svg structure already
         // exists, so we don't mess with that.
@@ -307,9 +311,12 @@ function replaceClipPaths(el)
 		return;
 	
 	// Handle children first
-	for (var i = 0; i < el.children.length; i++)
+	for (var i = 0; i < el.childNodes.length; i++)
 	{
-		var testEl = el.children[i];
+		var testEl = el.childNodes[i];
+		if (testEl.nodeType != 1)
+			continue;
+
 		var newChild = replaceClipPaths(testEl);
 		if (newChild != testEl)
 		{
